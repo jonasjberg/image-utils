@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="$(basename $0)"
+DEBUG_MODE="true"
+
+C_NORMAL=$(tput sgr0)
+C_RED=$(tput setaf 1)
+C_GREEN=$(tput setaf 2)
+C_YELLOW=$(tput setaf 3)
+C_BLUE=$(tput setaf 4)
+C_MAGENTA=$(tput setaf 5)
+C_CYAN=$(tput setaf 6)
+HALFTAB='  '
+FULLTAB='    '
+
+# FUNCTION MSG_TYPE() -- Prints timestamped debug messages
+# Messages can be of three different types (severity): ERROR, INFO and WARNING.
+# Usage: msg_type info example informative text
+#        msg_type warn some unexpected thing happened
+#        msg_type "just text, no type specified"
+function msg_type()
+{
+    if [ $# -gt 1 ]
+    then
+        local type="$1"
+        shift
+    fi
+
+    local text="${@}"
+    local label=''
+
+    if [ "$type" == "debug" ] && [ "$DEBUG_MODE" != "true" ]
+    then
+        return
+    fi
+
+    case $type in
+        error ) label='ERROR'
+                color=$C_RED    ;;
+        info  ) label='+'
+                color=$C_GREEN  ;;
+        warn  ) label='!'
+                color=$C_YELLOW ;;
+        debug ) label='debug'
+                color=$C_NORMAL ;;
+        *     ) color=$C_NORMAL ;;
+    esac
+
+    # Surround label with brackets if not empty.
+    if [ ! -z "$label" ]
+    then
+        label="[${color}${label}${C_NORMAL}]"
+    fi
+
+    printf "${label}${HALFTAB}%s\n" "$text"
+}
+
+# Terminates the program. Prints debug information if enabled.
+# Takes the exit code as argument. Defaults to 1 if unspecified.
+function exit_status()
+{
+    status=${1:-1}
+    msg_type debug "Exiting with status [${status}]"
+    exit ${status}
+}
+
+# Displays the usage information.
+function print_help()
+{
+    msg_type info "\"${SCRIPT_NAME}\" -- Jonas Sjoberg 2016"
+    msg_type info "Detects corrupt images from reading contents and metadata."
+    msg_type info "Good for sifting through data produced by data recovery or forensics."
+    msg_type info "Reads file type from magic header bytes, file extension should not matter."
+    msg_type usage ""
+    msg_type usage "usage: ${SCRIPT_NAME} [options] [file(s)]"
+    msg_type usage "options:    -b   print only corrupt files"
+    msg_type usage "            -h   display help and usage information"
+    msg_type usage "            -v   increase verbosity"
+}
+
+# Main routine that actually does the analysis.
+function main()
+{
+    arg=${1:-}
+
+    [ -z "$arg" ] && { msg_type warn "Got null argument .."   ; continue ; }
+    [ -e "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; continue ; }
+    [ -f "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; continue ; }
+
+    # Check file type by reading magic header bytes.
+    arg_mime=$(file --brief --mime -- "$arg" | grep -o image)
+
+    if [ "$arg_mime" != "image" ]
+    then
+        msg_type debug "Not an image; skipping \"${arg}\" .."
+        continue
+    fi
+
+    exiftool -warning "$arg"
+}
+
+
+# ______________________________________________________________________________
+# PROGRAM INVOCATION CODE EXECUTION STARTS HERE
+TIMESTAMP="$(date +%F\ %H:%M:%S)"
+msg_type debug "${SCRIPT_NAME} started at ${TIMESTAMP}"
+
+# Set default options.
+verbose=1
+brief=0
+
+
+if [ $# -eq 0 ]
+then
+    # No arguments provided.
+    msg_type warn "No arguments provided."
+    msg_type warn "For help run: \"${SCRIPT_NAME} -h\""
+    exit_status 1
+else
+    # Parse arguments.
+    while getopts bhv var
+    do
+        case "$var" in
+            b) brief=1    ;;
+            h) print_help ;;
+            v) verbose=2  ;;
+        esac
+    done
+
+    shift $(( $OPTIND - 1 ))
+
+    caught_error=0
+    # Run main routine on arguments.
+    for arg in "$@"
+    do
+        main "$arg"
+
+        if [ $? -ne "$caught_error" ] 
+        the
+            caught_error="$?"
+        fi
+    done
+
+    exit_status "$caught_error"
+fi
