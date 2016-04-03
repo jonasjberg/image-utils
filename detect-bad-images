@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 SCRIPT_NAME="$(basename $0)"
-DEBUG_MODE="true"
+DEBUG_MODE="false"
 
 C_NORMAL=$(tput sgr0)
 C_RED=$(tput setaf 1)
@@ -30,6 +30,11 @@ function msg_type()
     local label=''
 
     if [ "$type" == "debug" ] && [ "$DEBUG_MODE" != "true" ]
+    then
+        return
+    fi
+
+    if [ "$brief" -eq 1 ]
     then
         return
     fi
@@ -83,13 +88,12 @@ function main()
 {
     arg=${1:-}
 
-    [ -z "$arg" ] && { msg_type warn "Got null argument .."   ; return 2 ; }
-    [ -e "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; return 2 ; }
-    [ -f "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; return 2 ; }
+    [ -z "$arg" ] && { msg_type warn "Got null argument .."            ; return 2 ; }
+    [ -e "$arg" ] || { msg_type warn "File \"${arg}\" does not exist." ; return 2 ; }
+    [ -f "$arg" ] || { msg_type warn "\"${arg}\" is not a file."       ; return 2 ; }
 
     # Check file type by reading magic header bytes.
     #arg_mime=$(file --brief --mime -- "$arg" | grep image)
-    msg_type info "Checking \"${arg}\""
 
     unset arg_mime
     case $(file --mime-type --brief -- "$arg") in
@@ -100,28 +104,52 @@ function main()
     
     if [ -z "$arg_mime" ]
     then
-        msg_type warn "Skipping non-image \"${arg}\" .."
+        msg_type warn "File \"${arg}\" is not an image."
         return 2
     fi
 
-    exiftool -warning -quiet "$arg"
+    msg_type info "Checking integrity of image file \"${arg}\" .."
+
+    if [ "$brief" -eq 1 ]
+    then
+        check_image_with_exiftool "$arg" >/dev/null
+    else
+        check_image_with_exiftool "$arg" 
+    fi
     exiftool_result=$?
 
+    jpeginfo_result=0
     if [ "$arg_mime" == "jpg" ]
     then
-        jpeginfo --check "$arg"
+        if [ "$brief" -eq 1 ]
+        then
+            check_image_with_jpeginfo "$arg" >/dev/null
+        else
+            check_image_with_jpeginfo "$arg" 
+        fi
         jpeginfo_result=$?
     fi
 
-    if [ $exiftool_result -eq 0 ] && [ ${jpeginfo_result:-0} -eq 0 ]
+    if [ $exiftool_result -eq 0 ] && [ $jpeginfo_result -eq 0 ]
     then
-        msg_type info '* OK *'
         return 0
     else
-        msg_type error 'FAILED'
+        msg_type error "Image \"${arg}\" failed the tests!"
+        [ "$brief" -eq 1 ] && printf "%s\n" "${arg}"
         return 1
     fi
 }
+
+function check_image_with_exiftool()
+{
+    exiftool -warning -quiet -ignoreMinorErrors "$1" | sed -r 's/[\ ]{2,}/\ /g'
+}
+
+function check_image_with_jpeginfo()
+{
+    jpeginfo --check --quiet --lsstyle "$1"
+}
+
 
 
 # ______________________________________________________________________________
