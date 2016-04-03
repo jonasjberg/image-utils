@@ -83,20 +83,44 @@ function main()
 {
     arg=${1:-}
 
-    [ -z "$arg" ] && { msg_type warn "Got null argument .."   ; continue ; }
-    [ -e "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; continue ; }
-    [ -f "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; continue ; }
+    [ -z "$arg" ] && { msg_type warn "Got null argument .."   ; return 2 ; }
+    [ -e "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; return 2 ; }
+    [ -f "$arg" ] || { msg_type warn "Skipping \"${arg}\" .." ; return 2 ; }
 
     # Check file type by reading magic header bytes.
-    arg_mime=$(file --brief --mime -- "$arg" | grep -o image)
+    #arg_mime=$(file --brief --mime -- "$arg" | grep image)
+    msg_type info "Checking \"${arg}\""
 
-    if [ "$arg_mime" != "image" ]
+    unset arg_mime
+    case $(file --mime-type --brief -- "$arg") in
+        image/j*g)  arg_mime=jpg ;;
+        image/png)  arg_mime=png ;;
+        *)                       ;;
+    esac
+    
+    if [ -z "$arg_mime" ]
     then
-        msg_type debug "Not an image; skipping \"${arg}\" .."
-        continue
+        msg_type warn "Skipping non-image \"${arg}\" .."
+        return 2
     fi
 
-    exiftool -warning "$arg"
+    exiftool -warning -quiet "$arg"
+    exiftool_result=$?
+
+    if [ "$arg_mime" == "jpg" ]
+    then
+        jpeginfo --check "$arg"
+        jpeginfo_result=$?
+    fi
+
+    if [ $exiftool_result -eq 0 ] && [ ${jpeginfo_result:-0} -eq 0 ]
+    then
+        msg_type info '* OK *'
+        return 0
+    else
+        msg_type error 'FAILED'
+        return 1
+    fi
 }
 
 
@@ -121,25 +145,46 @@ else
     while getopts bhv var
     do
         case "$var" in
-            b) brief=1    ;;
-            h) print_help ;;
-            v) verbose=2  ;;
+            b) brief=1       ;;
+            h) print_help    ;
+               exit_status 0 ;;
+            v) verbose=2     ;;
         esac
     done
 
     shift $(( $OPTIND - 1 ))
 
-    caught_error=0
+    count_total=0
+    count_pass=0
+    count_fail=0
     # Run main routine on arguments.
     for arg in "$@"
     do
+        count_total=$(( $count_total + 1)) 
+
         main "$arg"
 
-        if [ $? -ne "$caught_error" ] 
-        the
-            caught_error="$?"
+        status="$?"
+        if [ $status -ne 0 ] && [ $status -ne 2 ] 
+        then
+            count_fail=$(( $count_fail + 1 ))
+        elif [ $status -eq 0 ]
+        then
+            count_pass=$(( $count_pass + 1 ))
         fi
     done
 
-    exit_status "$caught_error"
+    if [ $brief -ne 1 ]
+    then
+        msg_type result "PASS  [${count_pass}]"
+        msg_type result "FAIL  [${count_fail}]"
+        msg_type result "total [${count_total}]"
+    fi
+
+    if [ $count_fail -eq 0 ]
+    then
+        exit_status 0
+    else
+        exit_status 1
+    fi
 fi
