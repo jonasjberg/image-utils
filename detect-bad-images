@@ -107,6 +107,7 @@ function main()
         return 2
     fi
 
+    printf "\n"
     msg_type info "Checking integrity of image file \"${arg}\" .."
 
     if [ "$brief" -eq 1 ]
@@ -149,6 +150,10 @@ function check_image_with_jpeginfo()
     jpeginfo --check --quiet --lsstyle "$1"
 }
 
+function print_result_line()
+{
+    printf "%-60.60s\n" "$*"
+}
 
 
 # ______________________________________________________________________________
@@ -196,16 +201,19 @@ else
         # Exit status:   0  image OK!
         #                1  image failed test
         #                2  skipped (not an image, etc)
-        if [ $status -ne 0 ] && [ $status -ne 2 ] 
+        if [ $status -eq 2 ]
         then
-            # Not OK and not skipped, I.E. fail.
-            count_image_failed=$(( $count_image_failed + 1 ))
-        elif [ $status -eq 2 ]
-        then
-            count_image_passed=$(( $count_image_passed + 1 ))
+            msg_type debug "Skipped \"${arg}\" .."
+            continue
         fi
+
+        if [ $status -eq 1 ]
+        then
+            count_images=$(( $count_images + 1 ))
+            count_image_failed=$(( $count_image_failed + 1 ))
         elif [ $status -eq 0 ]
         then
+            count_images=$(( $count_images + 1 ))
             count_image_passed=$(( $count_image_passed + 1 ))
         fi
     done
@@ -216,12 +224,14 @@ else
     then
         TAB='    '
         SEP=':'
-        FORMAT_COL="%20.20s${SEP} %-38.38s\n"
-        printf "\n\n"
-        printf "%-60.60s\n" "----------------------------------------------------"
-        printf "%-60.60s\n" "TEST RESULTS:"
-        printf "$FORMAT_COL" "Pass" "$(printf "%s / %-s" "$count_image_passed" "$count_total")"
-        printf "$FORMAT_COL" "FAIL" "$(printf "%s / %-s" "$count_image_failed" "$count_total")"
+        FORMAT_COL="%-22.22s ${SEP} %-35.35s\n"
+        print_result_line ""
+        print_result_line "----------------------------------------------------"
+        print_result_line "TEST RESULTS:"
+        print_result_line "$(printf "$FORMAT_COL" "Total number of files" "$count_total")"
+        print_result_line "$(printf "$FORMAT_COL" "Total number of IMAGES" "$count_images")"
+        print_result_line "$(printf "${C_GREEN}%22.22s${C_NORMAL} ${SEP} %-35.35s\n" "[PASSED]" "$count_image_passed")"
+        print_result_line "$(printf "${C_RED}%22.22s${C_NORMAL} ${SEP} %-35.35s\n" "[FAILED]" "$count_image_failed")"
     fi
 
     if [ $count_image_failed -eq 0 ]
