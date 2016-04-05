@@ -94,7 +94,6 @@ function main()
 
     # Check file type by reading magic header bytes.
     #arg_mime=$(file --brief --mime -- "$arg" | grep image)
-
     unset arg_mime
     case $(file --mime-type --brief -- "$arg") in
         image/j*g)  arg_mime=jpg ;;
@@ -183,8 +182,9 @@ else
     shift $(( $OPTIND - 1 ))
 
     count_total=0
-    count_pass=0
-    count_fail=0
+    count_images=0
+    count_image_passed=0
+    count_image_failed=0
     # Run main routine on arguments.
     for arg in "$@"
     do
@@ -193,23 +193,38 @@ else
         main "$arg"
 
         status="$?"
+        # Exit status:   0  image OK!
+        #                1  image failed test
+        #                2  skipped (not an image, etc)
         if [ $status -ne 0 ] && [ $status -ne 2 ] 
         then
-            count_fail=$(( $count_fail + 1 ))
+            # Not OK and not skipped, I.E. fail.
+            count_image_failed=$(( $count_image_failed + 1 ))
+        elif [ $status -eq 2 ]
+        then
+            count_image_passed=$(( $count_image_passed + 1 ))
+        fi
         elif [ $status -eq 0 ]
         then
-            count_pass=$(( $count_pass + 1 ))
+            count_image_passed=$(( $count_image_passed + 1 ))
         fi
     done
 
+    # Print results with a summary of all tests, *IF* option brief is not set.
+    # Keep text width below 60 columns to avoid messy output in small terminal windows.
     if [ $brief -ne 1 ]
     then
-        msg_type result "PASS  [${count_pass}]"
-        msg_type result "FAIL  [${count_fail}]"
-        msg_type result "total [${count_total}]"
+        TAB='    '
+        SEP=':'
+        FORMAT_COL="%20.20s${SEP} %-38.38s\n"
+        printf "\n\n"
+        printf "%-60.60s\n" "----------------------------------------------------"
+        printf "%-60.60s\n" "TEST RESULTS:"
+        printf "$FORMAT_COL" "Pass" "$(printf "%s / %-s" "$count_image_passed" "$count_total")"
+        printf "$FORMAT_COL" "FAIL" "$(printf "%s / %-s" "$count_image_failed" "$count_total")"
     fi
 
-    if [ $count_fail -eq 0 ]
+    if [ $count_image_failed -eq 0 ]
     then
         exit_status 0
     else
