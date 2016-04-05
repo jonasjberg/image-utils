@@ -1,0 +1,210 @@
+#!/usr/bin/env bash
+
+SCRIPT_NAME="$(basename $0)"
+DEBUG_MODE="true"
+
+C_NORMAL=$(tput sgr0)
+C_RED=$(tput setaf 1)
+C_GREEN=$(tput setaf 2)
+C_YELLOW=$(tput setaf 3)
+C_BLUE=$(tput setaf 4)
+C_MAGENTA=$(tput setaf 5)
+C_CYAN=$(tput setaf 6)
+HALFTAB='  '
+FULLTAB='    '
+
+# Max image size in bytes. Images under this threshold will be ignored.
+MAX_SIZE=2000000
+
+# FUNCTION MSG_TYPE() -- Prints timestamped debug messages
+# Messages can be of three different types (severity): ERROR, INFO and WARNING.
+# Usage: msg_type info example informative text
+#        msg_type warn some unexpected thing happened
+#        msg_type "just text, no type specified"
+function msg_type()
+{
+    if [ $# -gt 1 ]
+    then
+        local type="$1"
+        shift
+    fi
+
+    local text="${@}"
+    local label=''
+
+    if [ "$type" == "debug" ] && [ "$DEBUG_MODE" != "true" ]
+    then
+        return
+    fi
+
+    case $type in
+        error ) label='ERROR'
+                color=$C_RED    ;;
+        info  ) label='info'
+                color=$C_GREEN  ;;
+        warn  ) label='warning'
+                color=$C_YELLOW ;;
+        debug ) label='debug'
+                color=$C_NORMAL ;;
+        ok    ) label='OK!'
+                color=$C_GREEN  ;;
+        *     ) color=$C_NORMAL ;;
+    esac
+
+    # Surround label with brackets if not empty.
+    if [ ! -z "$label" ]
+    then
+        label="[${color}${label}${C_NORMAL}]"
+    fi
+
+    printf "${label}${HALFTAB}%s\n" "$text"
+}
+
+function check_dependencies_are_available()
+{
+    required_programs="aaphoto convert mogrify"
+
+    for program in $required_programs
+    do
+        if ! command -v "$program" >/dev/null 2>&1
+        then
+            msg_type error "Missing required executable \"${program}\" .. Aborting."
+            exit 127
+        fi
+    done
+}
+
+function main()
+{
+    local arg=${1:-}
+
+    [ -z "$arg" ] && { msg_type error "Got null argument .."       ; return 2 ; }
+    [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 2 ; }
+    [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 2 ; }
+
+    msg_type info "Got file \"${arg}\""
+    msg_type debug "Checking file MIME type from magic header bytes"
+
+    # Check file type by reading magic header bytes.
+    unset arg_mime
+    case $(file --mime-type --brief -- "$arg") in
+        image/j*g)  arg_mime=jpg ;;
+        image/png)  arg_mime=png ;;
+        *)                       ;;
+    esac
+    
+    if [ -z "$arg_mime" ]
+    then
+        msg_type error "Not an image: \"${arg}\""
+        return 2
+    else
+        msg_type debug "File MIME type: ${arg_mime}"
+    fi
+
+
+    # What is to be done to the image is determined by the device/camera model.
+    # Example: Photos taken with the OnePlus X camera app are very big and blurry
+    #          and take up way too much disk space.
+    # First try to extract the model using exiftool, then process image based on
+    # results. If the model cannot be determined, proceed with checking the ratio
+    # of size to disk space usage.
+    unset model_result
+    model_result=$(exiftool -if '$model' -quiet -s3 -model "$arg" 2>/dev/null)
+    model_check_exit_code=$?
+
+    # TODO: Really bail if check fails?
+    if [ $model_check_exit_code -ne 0 ]
+    then
+        msg_type error "Camera/device model check failed"
+        return 2
+    fi
+    
+    if [ -z $model_result ]
+    then
+        msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
+        return 1
+    else
+        case $model_result in
+            "iPhone 4")   model=iphone4  ;;
+            "GT-I9100")   model=galaxys4 ;;
+            "ONE E1003")  model=oneplusx ;;
+            *)            unset model    ;;
+        esac
+    fi
+        
+    msg_type debug "Camera/device model: ${model} (${model_result})"
+
+    if [ $model == "oneplusx" ]
+    then
+        handle_image_if_size_above_threshold "$arg"
+    elif [ $model == "galaxys4" ]
+    then
+        # TODO: Implement device specific behaviours
+        msg_type warn "Behaviour for device not implemented yet. Skipping .."
+    elif [ $model == "iphone4" ]
+    then
+        # TODO: Implement device specific behaviours
+        msg_type warn "Behaviour for device not implemented yet. Skipping .."
+    fi
+
+    if [ $? -ne 0 ]
+    then
+        msg_type error "Failed processing \"${arg}\""
+    else
+        msg_type ok "DONE"
+        #msg_type ok "DONE processing \"${arg}\""
+    fi
+}
+
+function handle_image_if_size_above_threshold()
+{
+    local arg=${1:-}
+    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+
+    # Get image file size.
+    msg_type debug "Checking file size: \"${arg}\""
+    image_size=$(stat -c%s "$arg")
+    msg_type debug "size : ${image_size}"
+    
+    # Compare image size to max size threshold and proceed if size exceeds threshold.
+    if [ $image_size -gt $MAX_SIZE ]
+    then
+        msg_type info "Image size exceeds threshold (${image_size} > ${MAX_SIZE})"
+        msg_type info "Processing image \"${arg}\" .."
+        mogrify -scale 75% -quality 85 "$arg"
+        #aaphoto --autoadjust --resize75% --quality85 --overwrite "$arg"
+
+        if [ $? -eq 0 ]
+        then
+            image_size_new=$(stat -c%s "${arg}")
+            percentage=$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)
+            msg_type stats $(printf "Size (bytes)  was: %12.12s\n" "$image_size")
+            msg_type stats $(printf "              now: %12.12s     (delta: %-6.6s%%)\n" "$image_size_new" "$percentage")
+            return 0
+        else
+            msg_type error "Failed processing \"${arg}\""
+            return 1
+        fi
+    fi
+}
+
+
+# ______________________________________________________________________________
+# MAIN ROUTINE EXECUTION STARTS HERE
+
+if [ $# -eq 0 ]
+then
+    msg_type error "Positional arguments missing! At least one is required."
+    msg_type error "Exiting .."
+    exit 1
+fi
+
+check_dependencies_are_available
+
+for arg in "$@"
+do
+    main "${arg}"
+done
+
+exit $?
+
