@@ -1,7 +1,29 @@
 #!/usr/bin/env bash
+#
+# auto-adjust-photos
+# ~~~~~~~~~~~~~~~~~~
+# Written by Jonas Sjöberg
+# https://github.com/jonasjberg
+# jomeganas@gmail.com
+# ______________________________________________________________________________
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# ______________________________________________________________________________
+
+#set -x
 
 SCRIPT_NAME="$(basename $0)"
-DEBUG_MODE="true"
 
 C_NORMAL=$(tput sgr0)
 C_RED=$(tput setaf 1)
@@ -14,7 +36,7 @@ HALFTAB='  '
 FULLTAB='    '
 
 # Max image size in bytes. Images under this threshold will be ignored.
-MAX_SIZE=2000000
+MAX_IMAGE_FILE_SIZE=2000000
 
 # FUNCTION MSG_TYPE() -- Prints timestamped debug messages
 # Messages can be of three different types (severity): ERROR, INFO and WARNING.
@@ -32,7 +54,7 @@ function msg_type()
     local text="${@}"
     local label=''
 
-    if [ "$type" == "debug" ] && [ "$DEBUG_MODE" != "true" ]
+    if [ "$type" == "debug" ] && [ $verbose -lt 2 ]
     then
         return
     fi
@@ -60,9 +82,35 @@ function msg_type()
     printf "${label}${HALFTAB}%s\n" "$text"
 }
 
+# Terminates the program. Prints debug information if enabled.
+# Takes the exit code as argument. Defaults to 1 if unspecified.
+function exit_status()
+{
+    TIMESTAMP="$(date +%F\ %H:%M:%S)"
+    status=${1:-1}
+    msg_type debug "${TIMESTAMP} ${SCRIPT_NAME} exiting with status [${status}]"
+    exit ${status}
+}
+
+# Displays the usage information.
+function print_help()
+{
+    msg_type info "\"${SCRIPT_NAME}\" -- Jonas Sjoberg 2016"
+    msg_type info "Auto-adjusts images based on metadata, file size and image dimensions."
+    msg_type info "Originally written for automatically modifying images that are uploaded to the \'Camera Uploads\' Dropbox folder."
+    msg_type info "Reads file type from magic header bytes, file extension should not matter."
+    msg_type usage ""
+    msg_type usage "usage: ${SCRIPT_NAME} [options] [file(s)]"
+    msg_type usage "options:    -b   brief mode, prints less output"
+    msg_type usage "            -d   dry run, simulates what would happen"
+    msg_type usage "            -h   display help and usage information"
+    msg_type usage "            -v   increase verbosity, prints more debug information"
+}
+
+
 function check_dependencies_are_available()
 {
-    required_programs="aaphoto convert mogrify"
+    required_programs="aaphoto convert mogrify exiftool"
 
     for program in $required_programs
     do
@@ -74,13 +122,16 @@ function check_dependencies_are_available()
     done
 }
 
-function main()
+# Checks that a file is an image file by reading the "magic" header bytes. 
+# Return values:    0 - success, file is an image
+#                   1 - failure, file is not an image
+function check_file_is_image()
 {
     local arg=${1:-}
 
-    [ -z "$arg" ] && { msg_type error "Got null argument .."       ; return 2 ; }
-    [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 2 ; }
-    [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 2 ; }
+    [ -z "$arg" ] && { msg_type error "Got null argument .."       ; return 1 ; }
+    [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 1 ; }
+    [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 1 ; }
 
     msg_type info "Got file \"${arg}\""
     msg_type debug "Checking file MIME type from magic header bytes"
@@ -95,12 +146,19 @@ function main()
     
     if [ -z "$arg_mime" ]
     then
-        msg_type error "Not an image: \"${arg}\""
-        return 2
+        # msg_type error "Not an image: \"${arg}\""
+        return 1
     else
         msg_type debug "File MIME type: ${arg_mime}"
+        return 0
     fi
+}
 
+# Main logic starts from this function which takes a single file as argument.
+function main()
+{
+    local arg=${1:-}
+    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     # What is to be done to the image is determined by the device/camera model.
     # Example: Photos taken with the OnePlus X camera app are very big and blurry
@@ -128,23 +186,27 @@ function main()
             "iPhone 4")   model=iphone4  ;;
             "GT-I9100")   model=galaxys4 ;;
             "ONE E1003")  model=oneplusx ;;
-            *)            unset model    ;;
+            *)            model=unknown    ;;
         esac
     fi
         
     msg_type debug "Camera/device model: ${model} (${model_result})"
 
-    if [ $model == "oneplusx" ]
+    if [ "$model" == "oneplusx" ]
     then
         handle_image_if_size_above_threshold "$arg"
-    elif [ $model == "galaxys4" ]
+    elif [ "$model" == "galaxys4" ]
     then
         # TODO: Implement device specific behaviours
         msg_type warn "Behaviour for device not implemented yet. Skipping .."
-    elif [ $model == "iphone4" ]
+    elif [ "$model" == "iphone4" ]
     then
         # TODO: Implement device specific behaviours
         msg_type warn "Behaviour for device not implemented yet. Skipping .."
+    elif [ "$model" == "unknown" ]
+    then
+        # TODO: Implement device specific behaviours
+        msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
     fi
 
     if [ $? -ne 0 ]
@@ -156,6 +218,7 @@ function main()
     fi
 }
 
+# Downsamples images whose file size exceed a threshold.
 function handle_image_if_size_above_threshold()
 {
     local arg=${1:-}
@@ -167,12 +230,12 @@ function handle_image_if_size_above_threshold()
     msg_type debug "size : ${image_size}"
     
     # Compare image size to max size threshold and proceed if size exceeds threshold.
-    if [ $image_size -gt $MAX_SIZE ]
+    if [ $image_size -gt $MAX_IMAGE_FILE_SIZE ]
     then
-        msg_type info "Image size exceeds threshold (${image_size} > ${MAX_SIZE})"
+        msg_type info "Image size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
         msg_type info "Processing image \"${arg}\" .."
-        mogrify -scale 75% -quality 85 "$arg"
-        #aaphoto --autoadjust --resize75% --quality85 --overwrite "$arg"
+        downsample_image_with_mogrify "$arg"
+        #downsample_image_with_aaphoto "$arg"
 
         if [ $? -eq 0 ]
         then
@@ -188,23 +251,129 @@ function handle_image_if_size_above_threshold()
     fi
 }
 
+function downsample_image_with_mogrify()
+{
+    local arg=${1:-}
+    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+
+    MOGRIFY_OPTS='-scale 75% -quality 85'
+    msg_type debug "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
+    mogrify ${MOGRIFY_OPTS} "$1"
+}
+
+function downsample_image_with_aaphoto()
+{
+    local arg=${1:-}
+    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+
+    AAPHOTO_OPTS='--autoadjust --resize75% --quality85 --overwrite'
+    msg_type debug "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
+    aaphoto ${AAPHOTO_OPTS} "$1"
+}
+
+function print_line()
+{
+    MAX_WIDTH=60
+    printf "%-${MAX_WIDTH}.${MAX_WIDTH}s\n" "$*"
+}
 
 # ______________________________________________________________________________
 # MAIN ROUTINE EXECUTION STARTS HERE
+TIMESTAMP="$(date +%F\ %H:%M:%S)"
+msg_type debug "${TIMESTAMP} starting ${SCRIPT_NAME}"
+
+# Set default options.
+verbose=1
+brief=0
+dryrun=0
+
 
 if [ $# -eq 0 ]
 then
-    msg_type error "Positional arguments missing! At least one is required."
-    msg_type error "Exiting .."
-    exit 1
+    # No arguments provided.
+    msg_type warn "No arguments provided."
+    msg_type warn "For help run: \"${SCRIPT_NAME} -h\""
+    exit_status 1
+else
+    # Parse arguments.
+    while getopts bdhv var
+    do
+        case "$var" in
+            b) brief=1       ;;
+            d) dryrun=1      ;;
+            h) print_help    ;
+               exit_status 0 ;;
+            v) verbose=2     ;;
+        esac
+    done
+
+    shift $(( $OPTIND - 1 ))
+
+    # Check selected options.
+    if [ $dryrun -eq 1 ]
+    then
+        msg_type error "Dry run mode is not implemented yet!"
+        exit_status 0
+    fi
+
+    # Set up counter variables.
+    count_total=0
+    count_images=0
+    count_image_passed=0
+    count_image_failed=0
+    # Run main routine on arguments.
+    for arg in "$@"
+    do
+        count_total=$(( $count_total + 1)) 
+
+        if check_file_is_image "$arg"
+        then
+            msg_type debug "Incrementing image counter"
+            count_images=$(( $count_images + 1 ))
+        else
+            msg_type error "Not an image: \"${arg}\""
+            continue 
+        fi
+
+        #main "$arg"
+
+        #status="$?"
+        #if [ $status -eq 2 ]
+        #then
+        #    msg_type debug "Skipped \"${arg}\" .."
+        #    continue
+        #fi
+
+        #if [ $status -eq 1 ]
+        #then
+        #    count_images=$(( $count_images + 1 ))
+        #    count_image_failed=$(( $count_image_failed + 1 ))
+        #elif [ $status -eq 0 ]
+        #then
+        #    count_images=$(( $count_images + 1 ))
+        #    count_image_passed=$(( $count_image_passed + 1 ))
+        #fi
+    done
+
+    # Print results with a summary of all tests, *IF* option brief is not set.
+    # Keep text width below 60 columns to avoid messy output in small terminal windows.
+    if [ $brief -ne 1 ]
+    then
+        TAB='    '
+        SEP=':'
+        FORMAT_COL="%-22.22s ${SEP} %-35.35s\n"
+        print_line ""
+        print_line "----------------------------------------------------"
+        print_line "Summary report:"
+        print_line "$(printf "$FORMAT_COL" "Total number of files" "$count_total")"
+        print_line "$(printf "$FORMAT_COL" "Total number of IMAGES" "$count_images")"
+    fi
+
+    if [ $count_image_failed -eq 0 ]
+    then
+        exit_status 0
+    else
+        exit_status 1
+    fi
 fi
-
-check_dependencies_are_available
-
-for arg in "$@"
-do
-    main "${arg}"
-done
-
-exit $?
 
