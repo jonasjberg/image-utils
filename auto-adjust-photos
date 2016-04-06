@@ -97,7 +97,7 @@ function print_help()
 {
     msg_type info "\"${SCRIPT_NAME}\" -- Jonas Sjoberg 2016"
     msg_type info "Auto-adjusts images based on metadata, file size and image dimensions."
-    msg_type info "Originally written for automatically modifying images that are uploaded to the \'Camera Uploads\' Dropbox folder."
+    msg_type info "Originally written for automatically modifying images uploaded to the 'Camera Uploads' Dropbox folder."
     msg_type info "Reads file type from magic header bytes, file extension should not matter."
     msg_type usage ""
     msg_type usage "usage: ${SCRIPT_NAME} [options] [file(s)]"
