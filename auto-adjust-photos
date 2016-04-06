@@ -62,7 +62,7 @@ function msg_type()
     case $type in
         error ) label='ERROR'
                 color=$C_RED    ;;
-        info  ) label='info'
+        info  ) label='status'
                 color=$C_GREEN  ;;
         warn  ) label='warning'
                 color=$C_YELLOW ;;
