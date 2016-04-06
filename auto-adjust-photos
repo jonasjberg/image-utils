@@ -133,7 +133,6 @@ function check_file_is_image()
     [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 1 ; }
     [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 1 ; }
 
-    msg_type info "Got file \"${arg}\""
     msg_type debug "Checking file MIME type from magic header bytes"
 
     # Check file type by reading magic header bytes.
@@ -159,6 +158,8 @@ function main()
 {
     local arg=${1:-}
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+    
+    msg_type info "Got file \"${arg}\""
 
     # What is to be done to the image is determined by the device/camera model.
     # Example: Photos taken with the OnePlus X camera app are very big and blurry
