@@ -54,7 +54,7 @@ function msg_type()
     local text="${@}"
     local label=''
 
-    if [ "$type" == "debug" ] && [ $verbose -lt 2 ]
+    if [ "$type" == "debug" ] && [ $verbose -lt "2" ]
     then
         return
     fi
@@ -154,6 +154,9 @@ function check_file_is_image()
 }
 
 # Main logic starts from this function which takes a single file as argument.
+# Return values:    0 - success, image processed ok
+#                   1 - failure, image processing failed
+#                   2 - skip, image skipped
 function main()
 {
     local arg=${1:-}
@@ -178,10 +181,10 @@ function main()
         return 2
     fi
     
-    if [ -z $model_result ]
+    if [ -z "$model_result" ]
     then
         msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
-        return 1
+        return 2
     else
         case $model_result in
             "iPhone 4")   model=iphone4  ;;
@@ -196,30 +199,26 @@ function main()
     if [ "$model" == "oneplusx" ]
     then
         handle_image_if_size_above_threshold "$arg"
+        return $?
     elif [ "$model" == "galaxys4" ]
     then
         # TODO: Implement device specific behaviours
         msg_type warn "Behaviour for device not implemented yet. Skipping .."
+        return 2
     elif [ "$model" == "iphone4" ]
     then
         # TODO: Implement device specific behaviours
         msg_type warn "Behaviour for device not implemented yet. Skipping .."
+        return 2
     elif [ "$model" == "unknown" ]
     then
         # TODO: Implement device specific behaviours
         msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
-    fi
-
-    if [ $? -ne 0 ]
-    then
-        msg_type error "Failed processing \"${arg}\""
-    else
-        msg_type ok "DONE"
-        #msg_type ok "DONE processing \"${arg}\""
+        return 2
     fi
 }
 
-# Downsamples images whose file size exceed a threshold.
+# Downsamples images whose file size exceed the threshold "MAX_IMAGE_FILE_SIZE".
 function handle_image_if_size_above_threshold()
 {
     local arg=${1:-}
@@ -228,13 +227,11 @@ function handle_image_if_size_above_threshold()
     # Get image file size.
     msg_type debug "Checking file size: \"${arg}\""
     image_size=$(stat -c%s "$arg")
-    msg_type debug "size : ${image_size}"
     
     # Compare image size to max size threshold and proceed if size exceeds threshold.
     if [ $image_size -gt $MAX_IMAGE_FILE_SIZE ]
     then
-        msg_type info "Image size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
-        msg_type info "Processing image \"${arg}\" .."
+        msg_type debug "Size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
         downsample_image_with_mogrify "$arg"
         #downsample_image_with_aaphoto "$arg"
 
@@ -243,12 +240,15 @@ function handle_image_if_size_above_threshold()
             image_size_new=$(stat -c%s "${arg}")
             percentage=$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)
             msg_type stats $(printf "Size (bytes)  was: %12.12s\n" "$image_size")
-            msg_type stats $(printf "              now: %12.12s     (delta: %-6.6s%%)\n" "$image_size_new" "$percentage")
+            msg_type stats $(printf "              now: %12.12s     (%-6.6s%% change)\n" "$image_size_new" "$percentage")
             return 0
         else
             msg_type error "Failed processing \"${arg}\""
             return 1
         fi
+    else
+        msg_type debug "Size does not exceed threshold (${image_size} < ${MAX_IMAGE_FILE_SIZE})"
+        return 0
     fi
 }
 
@@ -258,7 +258,8 @@ function downsample_image_with_mogrify()
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     MOGRIFY_OPTS='-scale 75% -quality 85'
-    msg_type debug "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
+    msg_type info "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
+    [ $dryrun -eq 1 ] && return
     mogrify ${MOGRIFY_OPTS} "$1"
 }
 
@@ -268,7 +269,8 @@ function downsample_image_with_aaphoto()
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     AAPHOTO_OPTS='--autoadjust --resize75% --quality85 --overwrite'
-    msg_type debug "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
+    msg_type info "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
+    [ $dryrun -eq 1 ] && return
     aaphoto ${AAPHOTO_OPTS} "$1"
 }
 
@@ -278,15 +280,18 @@ function print_line()
     printf "%-${MAX_WIDTH}.${MAX_WIDTH}s\n" "$*"
 }
 
+
 # ______________________________________________________________________________
 # MAIN ROUTINE EXECUTION STARTS HERE
-TIMESTAMP="$(date +%F\ %H:%M:%S)"
-msg_type debug "${TIMESTAMP} starting ${SCRIPT_NAME}"
 
 # Set default options.
 verbose=1
 brief=0
 dryrun=0
+
+# Log program invocation.
+TIMESTAMP="$(date +%F\ %H:%M:%S)"
+msg_type debug "${TIMESTAMP} starting ${SCRIPT_NAME}"
 
 
 if [ $# -eq 0 ]
@@ -311,32 +316,31 @@ else
     shift $(( $OPTIND - 1 ))
 
     # Check selected options.
-    if [ $dryrun -eq 1 ]
-    then
-        msg_type error "Dry run mode is not implemented yet!"
-        exit_status 0
-    fi
+    #if [ $dryrun -eq 1 ]
+    #then
+    #    msg_type error "Dry run mode is not implemented yet!"
+    #    exit_status 0
+    #fi
 
     # Set up counter variables.
     count_total=0
     count_images=0
     count_image_passed=0
     count_image_failed=0
-    # Run main routine on arguments.
+    # Start iteration over arguments.
     for arg in "$@"
     do
         count_total=$(( $count_total + 1)) 
 
         if check_file_is_image "$arg"
         then
-            msg_type debug "Incrementing image counter"
             count_images=$(( $count_images + 1 ))
         else
             msg_type error "Not an image: \"${arg}\""
             continue 
         fi
 
-        #main "$arg"
+        main "$arg"
 
         #status="$?"
         #if [ $status -eq 2 ]
