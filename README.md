@@ -11,6 +11,8 @@ Utilities related to editing and organizing photos/images.
 Currently a work in progress, you are on your own.
 
 
+--------------------------------------------------------------------------------
+
 `detect-bad-images`
 -------------------
 Finds corrupt images by using external tools `exiftool` and `jpeginfo`.
@@ -43,6 +45,8 @@ Deletes images deemed "bad". There is no undoing any deletion so be careful!
 find ~/Pictures -type f -exec ~/Bin/detect-bad-images -d '{}' \;
 ```
 
+
+--------------------------------------------------------------------------------
 
 `auto-adjust-photos`
 --------------------
