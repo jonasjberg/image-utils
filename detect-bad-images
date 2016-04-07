@@ -233,9 +233,10 @@ else
         fi
     done
 
-    # Print results with a summary of all tests, *IF* option brief is not set.
+    # Print results with a summary of all tests, IF:
+    # brief mode is disabled AND verbose mode is enabled.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ]
+    if [ $brief -ne 1 ] && [ $verbose -gt 1 ]
     then
         TAB='    '
         SEP=':'
