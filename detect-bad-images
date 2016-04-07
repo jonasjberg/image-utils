@@ -165,6 +165,7 @@ msg_type debug "${SCRIPT_NAME} started at ${TIMESTAMP}"
 # Set default options.
 verbose=1
 brief=0
+delete=0
 
 
 if [ $# -eq 0 ]
@@ -175,10 +176,11 @@ then
     exit_status 1
 else
     # Parse arguments.
-    while getopts bhv var
+    while getopts bdhv var
     do
         case "$var" in
             b) brief=1       ;;
+            d) delete=1      ;;
             h) print_help    ;
                exit_status 0 ;;
             v) verbose=2     ;;
@@ -212,6 +214,18 @@ else
         then
             count_images=$(( $count_images + 1 ))
             count_image_failed=$(( $count_image_failed + 1 ))
+
+            # Remove image if delete option is enabled.
+            if [ $delete -eq 1 ]
+            then
+                if [ $brief -eq 0 ]
+                then
+                    msg_type info "Deleting \"${arg}\" .."
+                    rm -vf "${arg}"
+                else
+                    rm -f "${arg}"
+                fi
+            fi
         elif [ $status -eq 0 ]
         then
             count_images=$(( $count_images + 1 ))
