@@ -107,7 +107,8 @@ function main()
         return 2
     fi
 
-    printf "\n"
+    # Extra newline for readability ONLY if brief mode is disabled.
+    [ "$brief" -eq 0 ] && printf "\n"
     msg_type info "Checking integrity of image file \"${arg}\" .."
 
     if [ "$brief" -eq 1 ]
