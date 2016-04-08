@@ -280,6 +280,12 @@ function print_line()
     printf "%-${MAX_WIDTH}.${MAX_WIDTH}s\n" "$*"
 }
 
+function add_to_total_preprocessed_disk_usage()
+{
+    #amount=
+    total_preprocessed_disk_usage=$(( $total_preprocessed_disk_usage + amount ))
+}
+
 
 # ______________________________________________________________________________
 # MAIN ROUTINE EXECUTION STARTS HERE
@@ -312,21 +318,17 @@ else
             v) verbose=2     ;;
         esac
     done
-
     shift $(( $OPTIND - 1 ))
-
-    # Check selected options.
-    #if [ $dryrun -eq 1 ]
-    #then
-    #    msg_type error "Dry run mode is not implemented yet!"
-    #    exit_status 0
-    #fi
 
     # Set up counter variables.
     count_total=0
     count_images=0
     count_image_passed=0
     count_image_failed=0
+
+    # Set up global statistics variables.
+    total_preprocessed_disk_usage=0
+
     # Start iteration over arguments.
     for arg in "$@"
     do
