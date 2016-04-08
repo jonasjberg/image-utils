@@ -36,7 +36,7 @@ HALFTAB='  '
 FULLTAB='    '
 
 # Max image size in bytes. Images under this threshold will be ignored.
-MAX_IMAGE_FILE_SIZE=2000000
+MAX_IMAGE_FILE_SIZE=2500000
 
 # FUNCTION MSG_TYPE() -- Prints timestamped debug messages
 # Messages can be of three different types (severity): ERROR, INFO and WARNING.
