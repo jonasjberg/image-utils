@@ -358,11 +358,14 @@ else
         #    count_images=$(( $count_images + 1 ))
         #    count_image_passed=$(( $count_image_passed + 1 ))
         #fi
+
+        # Extra newline for readability ONLY if brief mode is disabled.
+        [ "$brief" -eq 0 ] && printf "\n"
     done
 
     # Print results with a summary of all tests, *IF* option brief is not set.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ]
+    if [ $brief -ne 1 ] && [ $verbose -gt 1 ]
     then
         TAB='    '
         SEP=':'
