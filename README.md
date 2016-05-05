@@ -31,19 +31,25 @@ To display usage information, run:
 
 ### Example usage:
 
-```bash
-~/Bin/detect-bad-images -b ~/Pictures/* | while read f
-do 
-    printf "do whatever with %s ..\n" "$f"
-done
-```
+* **Looping over results**  
 
-### Example usage:
-Deletes images deemed "bad". There is no undoing any deletion so be careful!
+    Generic usage template. Note that you should probably research handling
+    "weird" file names properly, like those containing spaces, etc.
 
-```bash
-find ~/Pictures -type f -exec ~/Bin/detect-bad-images -d '{}' \;
-```
+    ```bash
+    ~/Bin/detect-bad-images -b ~/Pictures/* | while read f
+    do 
+        printf "do whatever with %s ..\n" "$f"
+    done
+    ```
+
+* **Remove bad images**  
+    
+    Deletes images deemed "bad". There is no undoing deletion so be careful!
+
+    ```bash
+    find ~/Pictures -type f -exec ~/Bin/detect-bad-images -d '{}' \;
+    ```
 
 
 --------------------------------------------------------------------------------
