@@ -180,6 +180,20 @@ function print_result_line()
     printf "%-60.60s\n" "$*"
 }
 
+function check_dependencies_are_available()
+{
+    required_programs="exiftool jpeginfo"
+
+    for program in $required_programs
+    do
+        if ! command -v "$program" >/dev/null 2>&1
+        then
+            msg_type error "Missing required executable \"${program}\" .. Aborting."
+            exit_status 127
+        fi
+    done
+}
+
 
 # ______________________________________________________________________________
 # PROGRAM INVOCATION CODE EXECUTION STARTS HERE
@@ -199,6 +213,9 @@ then
     msg_type warn "For help run: \"${SCRIPT_NAME} -h\""
     exit_status 1
 else
+    # Make sure required programs are available.
+    check_dependencies_are_available
+
     # Parse arguments.
     while getopts bdhv var
     do
