@@ -99,7 +99,7 @@ function print_help()
     msg_type info "Reads file type from magic header bytes, file extension should not matter."
     msg_type usage ""
     msg_type usage "usage: ${SCRIPT_NAME} [options] [file(s)]"
-    msg_type usage "options:    -b   print only corrupt files"
+    msg_type usage "options:    -b   print corrupt files only (less verbose)"
     msg_type usage "            -d   delete files that fail the tests (USE WITH CAUTION)"
     msg_type usage "            -h   display help and usage information"
     msg_type usage "            -v   increase verbosity"
