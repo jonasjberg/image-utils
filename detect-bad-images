@@ -102,7 +102,7 @@ function print_help()
     msg_type usage "options:    -b   print corrupt files only (less verbose)"
     msg_type usage "            -d   delete files that fail the tests (USE WITH CAUTION)"
     msg_type usage "            -h   display help and usage information"
-    msg_type usage "            -v   increase verbosity"
+    msg_type usage "            -s   print test summary/statistics"
 }
 
 # Main routine that actually does the analysis.
@@ -199,7 +199,7 @@ TIMESTAMP="$(date +%F\ %H:%M:%S)"
 msg_type debug "${SCRIPT_NAME} started at ${TIMESTAMP}"
 
 # Set default options.
-verbose=1
+stats=0
 brief=0
 delete=0
 
@@ -215,14 +215,14 @@ else
     check_dependencies_are_available
 
     # Parse arguments.
-    while getopts bdhv var
+    while getopts bdhs var
     do
         case "$var" in
             b) brief=1       ;;
             d) delete=1      ;;
             h) print_help    ;
                exit_status 0 ;;
-            v) verbose=2     ;;
+            s) stats=1       ;;
         esac
     done
 
@@ -273,9 +273,9 @@ else
     done
 
     # Print results with a summary of all tests, IF:
-    # brief mode is disabled AND verbose mode is enabled.
+    # brief mode is disabled AND stats mode is enabled.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ] && [ $verbose -gt 1 ]
+    if [ $brief -ne 1 ] && [ $stats -gt 0 ]
     then
         TAB='    '
         SEP=':'
