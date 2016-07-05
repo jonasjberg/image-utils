@@ -55,9 +55,7 @@ function msg_type()
     if [ "$type" == "debug" ] && [ "$DEBUG_MODE" != "true" ]
     then
         return
-    fi
-
-    if [ "$brief" -eq 1 ]
+    elif [ "$brief" -eq 1 ]
     then
         return
     fi
