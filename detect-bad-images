@@ -262,9 +262,9 @@ else
                 if [ $brief -eq 0 ]
                 then
                     msg_type info "Deleting \"${arg}\" .."
-                    rm -vf "${arg}"
+                    rm --verbose --force -- "${arg}"
                 else
-                    rm -f "${arg}"
+                    rm --force -- "${arg}"
                 fi
             fi
         elif [ $status -eq 0 ]
