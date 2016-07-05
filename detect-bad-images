@@ -282,7 +282,7 @@ else
         FORMAT_COL="%-22.22s ${SEP} %-35.35s\n"
         print_result_line ""
         print_result_line "----------------------------------------------------"
-        print_result_line "TEST RESULTS:"
+        print_result_line "TEST RUN RESULTS SUMMARY:"
         print_result_line "$(printf "$FORMAT_COL" "Total number of files" "$count_total")"
         print_result_line "$(printf "$FORMAT_COL" "Total number of IMAGES" "$count_images")"
         print_result_line "$(printf "${C_GREEN}%22.22s${C_NORMAL} ${SEP} %-35.35s\n" "[PASSED]" "$count_image_passed")"
