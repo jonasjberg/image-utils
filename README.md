@@ -2,7 +2,7 @@ image-utils
 ================================================================================
 
     Created : 2016-04-03
-    Updated : 2016-04-07
+    Updated : 2016-07-05
     Author  : Jonas Sjöberg
     E-mail  : jomeganas@gmail.com
     GitHub  : https://github.com/jonasjberg 
