@@ -308,7 +308,7 @@ else
         count_total=$(( $count_total + 1))
 
         msg_type debug "Checking file MIME type from magic header bytes"
-        local arg_mime
+        unset arg_mime
         case $(file --mime-type --brief -- "$arg") in
             image/j*g)  arg_mime=jpg ;;
             image/png)  arg_mime=png ;;
