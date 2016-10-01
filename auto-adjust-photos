@@ -280,11 +280,11 @@ else
     while getopts bdhv var
     do
         case "$var" in
-            b) brief=1       ;;
-            d) dryrun=1      ;;
-            h) print_help    ;
+            b) brief=1                 ;;
+            d) dryrun=1                ;;
+            h) print_help              ;
                exit_with_status_code 0 ;;
-            v) verbose=2     ;;
+            v) verbose=2               ;;
         esac
     done
     shift $(( $OPTIND - 1 ))
