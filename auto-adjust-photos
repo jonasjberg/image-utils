@@ -350,10 +350,14 @@ else
         SEP=':'
         FORMAT_COL="%-22.22s ${SEP} %-35.35s\n"
         print_line ""
-        print_line "----------------------------------------------------"
-        print_line "Summary report:"
+        print_line ""
+        print_line "Summary report"
+        print_line "===================================================="
         print_line "$(printf "$FORMAT_COL" "Total number of files" "$count_total")"
         print_line "$(printf "$FORMAT_COL" "Total number of IMAGES" "$count_images")"
+        print_line "$(printf "$FORMAT_COL" "Images failed" "$count_image_failed")"
+        print_line "$(printf "$FORMAT_COL" "Images passed" "$count_image_passed")"
+        print_line ""
     fi
 
     if [ $count_image_failed -eq 0 ]
