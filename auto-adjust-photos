@@ -122,36 +122,6 @@ function check_dependencies_are_available()
     done
 }
 
-# Checks that a file is an image file by reading the "magic" header bytes. 
-# Return values:    0 - success, file is an image
-#                   1 - failure, file is not an image
-function check_file_is_image()
-{
-    local arg=${1:-}
-
-    [ -z "$arg" ] && { msg_type error "Got null argument .."       ; return 1 ; }
-    [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 1 ; }
-    [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 1 ; }
-
-    msg_type debug "Checking file MIME type from magic header bytes"
-
-    # Check file type by reading magic header bytes.
-    unset arg_mime
-    case $(file --mime-type --brief -- "$arg") in
-        image/j*g)  arg_mime=jpg ;;
-        image/png)  arg_mime=png ;;
-        *)                       ;;
-    esac
-    
-    if [ -z "$arg_mime" ]
-    then
-        # msg_type error "Not an image: \"${arg}\""
-        return 1
-    else
-        msg_type debug "File MIME type: ${arg_mime}"
-        return 0
-    fi
-}
 
 # Main logic starts from this function which takes a single file as argument.
 # Return values:    0 - success, image processed ok
@@ -334,8 +304,17 @@ else
     do
         count_total=$(( $count_total + 1)) 
 
-        if check_file_is_image "$arg"
+        msg_type debug "Checking file MIME type from magic header bytes"
+        local arg_mime
+        case $(file --mime-type --brief -- "$arg") in
+            image/j*g)  arg_mime=jpg ;;
+            image/png)  arg_mime=png ;;
+            *)                       ;;
+        esac
+
+        if [ -n "$arg_mime" ]
         then
+            msg_type debug "File MIME type: ${arg_mime}"
             count_images=$(( $count_images + 1 ))
         else
             msg_type error "Not an image: \"${arg}\""
