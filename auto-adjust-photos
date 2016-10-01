@@ -298,6 +298,10 @@ else
     # Set up global statistics variables.
     total_preprocessed_disk_usage=0
 
+    # Print startup information
+    TIMESTAMP="$(date +%F\ %H:%M:%S)"
+    msg_type debug "${TIMESTAMP} ${SCRIPT_NAME} is starting."
+
     # Start iteration over arguments.
     for arg in "$@"
     do
