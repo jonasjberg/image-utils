@@ -320,7 +320,7 @@ else
             msg_type debug "File MIME type: ${arg_mime}"
             count_images=$(( $count_images + 1 ))
         else
-            msg_type error "Not an image: \"${arg}\""
+            msg_type warn "Not an image: \"${arg}\""
             continue
         fi
 
