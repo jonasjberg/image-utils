@@ -194,8 +194,7 @@ function handle_image_if_size_above_threshold()
     local arg=${1:-}
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
-    # Get image file size.
-    msg_type debug "Checking file size: \"${arg}\""
+    msg_type debug "Checking size of file: \"${arg}\""
     image_size=$(stat -c%s "$arg")
 
     # Compare image size to max size threshold and proceed if size exceeds threshold.
