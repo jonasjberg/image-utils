@@ -367,7 +367,7 @@ else
 
     # Print results with a summary of all tests, *IF* option brief is not set.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ] && [ $verbose -gt 1 ]
+    if [ $brief -ne 1 ]
     then
         TAB='    '
         SEP=':'
