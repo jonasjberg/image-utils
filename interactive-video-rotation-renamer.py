@@ -44,24 +44,36 @@ mp4_files = [name for name in args.filenames if
              os.path.isfile(name) and name.endswith('.mp4')
              and not name.startswith('todo_')]
 
-def prompt_for_rotation():
-    prompt_options = {'1': 'Do not rotate',
-                      '2': '90 degrees Clockwise',
-                      '3': '90 degrees Counter-Clockwise',
-                      '4': '90 degrees Clockwise with vertical flip',
-                      '5': '180 degrees',
-                      '7': 'Skip',
-                      '8': 'Replay the video',
-                      '9': 'Quit'}
-    while True:
-        for number, option in sorted(prompt_options.items()):
-            print('[{}]  {}'.format(number, option))
 
-        choice = raw_input('Please input selection: ')
-        # print('User chose "{}"'.format(choice))
+def prompt_for_rotation():
+    prompt_options = {
+        '1': {'description': 'Do not rotate (reencode only)',
+              'prepend': 'todo_0deg_'},
+        '2': {'description': '90 degrees Clockwise',
+              'prepend': 'todo_90deg_'},
+        '3': {'description': '90 degrees Counter-Clockwise',
+              'prepend': 'todo_90degCCW_'},
+        '4': {'description': '90 degrees Clockwise with vertical flip',
+              'prepend': 'todo_90degVert_'},
+        '5': {'description': '180 degrees',
+              'prepend': 'todo_180deg_'},
+        '7': {'description': 'Skip',
+              'prepend': 'skip'},
+        '8': {'description': 'Replay the video',
+              'prepend': 'replay'},
+        '9': {'description': 'Quit',
+              'prepend': 'quit'}
+    }
+
+    while True:
+        print('__________________________________________________\n')
+        for number, option in sorted(prompt_options.items()):
+            print('[{}]  {}'.format(number, option['description']))
+
+        choice = raw_input('\nPlease input selection: ')
 
         if choice in prompt_options:
-            return choice
+            return prompt_options[choice]['prepend']
         else:
             print('Invalid selection.')
 
@@ -79,7 +91,7 @@ def prepend_to_filename(prepend_str, filename):
 for video in mp4_files:
     play_video = True
     while play_video:
-        print('Playing video with mplayer: "{}"'.format(video))
+        print('\n\nPlaying video with mplayer: "{}"'.format(video))
         try:
             cmd = ['mplayer', '-really-quiet', video]
             cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
@@ -89,21 +101,14 @@ for video in mp4_files:
 
         choice = prompt_for_rotation()
 
-        if choice != '8':
-            play_video = False
-        if choice == '9':
+        if choice == 'quit':
             exit(0)
-        elif choice == '7':
+        if choice == 'replay':
+            continue
+        if choice == 'skip':
             print('Skipping "{}" ..'.format(video))
+            play_video = False
             continue
 
-        if choice == '1':
-            prepend_to_filename('todo_0deg_', video)
-        elif choice == '2':
-            prepend_to_filename('todo_90deg_', video)
-        elif choice == '3':
-            prepend_to_filename('todo_90degCCW_', video)
-        elif choice == '4':
-            prepend_to_filename('todo_90degVert', video)
-        elif choice == '5':
-            prepend_to_filename('todo_180deg', video)
+        play_video = False
+        prepend_to_filename(choice, video)
