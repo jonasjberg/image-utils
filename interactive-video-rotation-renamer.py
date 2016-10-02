@@ -48,21 +48,21 @@ mp4_files = [name for name in args.filenames if
 def prompt_for_rotation():
     prompt_options = {
         '1': {'description': 'Do not rotate (reencode only)',
-              'prepend': 'todo_0deg_'},
+              'action': 'todo_0deg_'},
         '2': {'description': '90 degrees Clockwise',
-              'prepend': 'todo_90deg_'},
+              'action': 'todo_90deg_'},
         '3': {'description': '90 degrees Counter-Clockwise',
-              'prepend': 'todo_90degCCW_'},
+              'action': 'todo_90degCCW_'},
         '4': {'description': '90 degrees Clockwise with vertical flip',
-              'prepend': 'todo_90degVert_'},
+              'action': 'todo_90degVert_'},
         '5': {'description': '180 degrees',
-              'prepend': 'todo_180deg_'},
+              'action': 'todo_180deg_'},
         '7': {'description': 'Skip',
-              'prepend': 'skip'},
+              'action': 'skip'},
         '8': {'description': 'Replay the video',
-              'prepend': 'replay'},
+              'action': 'replay'},
         '9': {'description': 'Quit',
-              'prepend': 'quit'}
+              'action': 'quit'}
     }
 
     while True:
@@ -73,7 +73,7 @@ def prompt_for_rotation():
         choice = raw_input('\nPlease input selection: ')
 
         if choice in prompt_options:
-            return prompt_options[choice]['prepend']
+            return prompt_options[choice]['action']
         else:
             print('Invalid selection.')
 
