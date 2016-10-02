@@ -84,7 +84,7 @@ function msg_type()
 
 # Terminates the program. Prints debug information if enabled.
 # Takes the exit code as argument. Defaults to 1 if unspecified.
-function exit_status()
+function exit_with_status_code()
 {
     TIMESTAMP="$(date +%F\ %H:%M:%S)"
     status=${1:-1}
@@ -122,36 +122,6 @@ function check_dependencies_are_available()
     done
 }
 
-# Checks that a file is an image file by reading the "magic" header bytes. 
-# Return values:    0 - success, file is an image
-#                   1 - failure, file is not an image
-function check_file_is_image()
-{
-    local arg=${1:-}
-
-    [ -z "$arg" ] && { msg_type error "Got null argument .."       ; return 1 ; }
-    [ -e "$arg" ] || { msg_type error "Does not exist: \"${arg}\"" ; return 1 ; }
-    [ -f "$arg" ] || { msg_type error "Not a file: \"${arg}\""     ; return 1 ; }
-
-    msg_type debug "Checking file MIME type from magic header bytes"
-
-    # Check file type by reading magic header bytes.
-    unset arg_mime
-    case $(file --mime-type --brief -- "$arg") in
-        image/j*g)  arg_mime=jpg ;;
-        image/png)  arg_mime=png ;;
-        *)                       ;;
-    esac
-    
-    if [ -z "$arg_mime" ]
-    then
-        # msg_type error "Not an image: \"${arg}\""
-        return 1
-    else
-        msg_type debug "File MIME type: ${arg_mime}"
-        return 0
-    fi
-}
 
 # Main logic starts from this function which takes a single file as argument.
 # Return values:    0 - success, image processed ok
@@ -161,7 +131,7 @@ function main()
 {
     local arg=${1:-}
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
-    
+
     msg_type info "Got file \"${arg}\""
 
     # What is to be done to the image is determined by the device/camera model.
@@ -178,9 +148,9 @@ function main()
     if [ $model_check_exit_code -ne 0 ]
     then
         msg_type error "Camera/device model check failed"
-        return 2
+        return 1
     fi
-    
+
     if [ -z "$model_result" ]
     then
         msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
@@ -193,7 +163,7 @@ function main()
             *)            model=unknown    ;;
         esac
     fi
-        
+
     msg_type debug "Camera/device model: ${model} (${model_result})"
 
     if [ "$model" == "oneplusx" ]
@@ -224,10 +194,9 @@ function handle_image_if_size_above_threshold()
     local arg=${1:-}
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
-    # Get image file size.
-    msg_type debug "Checking file size: \"${arg}\""
+    msg_type debug "Checking size of file: \"${arg}\""
     image_size=$(stat -c%s "$arg")
-    
+
     # Compare image size to max size threshold and proceed if size exceeds threshold.
     if [ $image_size -gt $MAX_IMAGE_FILE_SIZE ]
     then
@@ -305,17 +274,17 @@ then
     # No arguments provided.
     msg_type warn "No arguments provided."
     msg_type warn "For help run: \"${SCRIPT_NAME} -h\""
-    exit_status 1
+    exit_with_status_code 1
 else
     # Parse arguments.
     while getopts bdhv var
     do
         case "$var" in
-            b) brief=1       ;;
-            d) dryrun=1      ;;
-            h) print_help    ;
-               exit_status 0 ;;
-            v) verbose=2     ;;
+            b) brief=1                 ;;
+            d) dryrun=1                ;;
+            h) print_help              ;
+               exit_with_status_code 0 ;;
+            v) verbose=2               ;;
         esac
     done
     shift $(( $OPTIND - 1 ))
@@ -329,37 +298,45 @@ else
     # Set up global statistics variables.
     total_preprocessed_disk_usage=0
 
+    # Print startup information
+    TIMESTAMP="$(date +%F\ %H:%M:%S)"
+    msg_type debug "${TIMESTAMP} ${SCRIPT_NAME} is starting."
+
     # Start iteration over arguments.
     for arg in "$@"
     do
-        count_total=$(( $count_total + 1)) 
+        count_total=$(( $count_total + 1))
 
-        if check_file_is_image "$arg"
+        msg_type debug "Checking file MIME type from magic header bytes"
+        unset arg_mime
+        case $(file --mime-type --brief -- "$arg") in
+            image/j*g)  arg_mime=jpg ;;
+            image/png)  arg_mime=png ;;
+            *)                       ;;
+        esac
+
+        if [ -n "$arg_mime" ]
         then
+            msg_type debug "File MIME type: ${arg_mime}"
             count_images=$(( $count_images + 1 ))
         else
-            msg_type error "Not an image: \"${arg}\""
-            continue 
+            msg_type warn "Not an image: \"${arg}\""
+            continue
         fi
 
         main "$arg"
+        status=$?
 
-        #status="$?"
-        #if [ $status -eq 2 ]
-        #then
-        #    msg_type debug "Skipped \"${arg}\" .."
-        #    continue
-        #fi
-
-        #if [ $status -eq 1 ]
-        #then
-        #    count_images=$(( $count_images + 1 ))
-        #    count_image_failed=$(( $count_image_failed + 1 ))
-        #elif [ $status -eq 0 ]
-        #then
-        #    count_images=$(( $count_images + 1 ))
-        #    count_image_passed=$(( $count_image_passed + 1 ))
-        #fi
+        if [ $status -eq 2 ]
+        then
+            msg_type warn "Skipped \"${arg}\" .."
+        elif [ $status -eq "1" ]
+        then
+            count_image_failed=$(( $count_image_failed + 1 ))
+        elif [ $status -eq "0" ]
+        then
+            count_image_passed=$(( $count_image_passed + 1 ))
+        fi
 
         # Extra newline for readability ONLY if brief mode is disabled.
         [ "$brief" -eq 0 ] && printf "\n"
@@ -367,23 +344,27 @@ else
 
     # Print results with a summary of all tests, *IF* option brief is not set.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ] && [ $verbose -gt 1 ]
+    if [ $brief -ne 1 ]
     then
         TAB='    '
         SEP=':'
         FORMAT_COL="%-22.22s ${SEP} %-35.35s\n"
         print_line ""
-        print_line "----------------------------------------------------"
-        print_line "Summary report:"
+        print_line ""
+        print_line "Summary report"
+        print_line "===================================================="
         print_line "$(printf "$FORMAT_COL" "Total number of files" "$count_total")"
         print_line "$(printf "$FORMAT_COL" "Total number of IMAGES" "$count_images")"
+        print_line "$(printf "$FORMAT_COL" "Images failed" "$count_image_failed")"
+        print_line "$(printf "$FORMAT_COL" "Images passed" "$count_image_passed")"
+        print_line ""
     fi
 
     if [ $count_image_failed -eq 0 ]
     then
-        exit_status 0
+        exit_with_status_code 0
     else
-        exit_status 1
+        exit_with_status_code 1
     fi
 fi
 
