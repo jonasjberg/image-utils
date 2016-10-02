@@ -98,6 +98,8 @@ for video in mp4_files:
         except subprocess.CalledProcessError as e:
             stdout = e.output
             retval = e.returncode
+            print('[ERROR] mplayer returned exit code {} and;'.format(retval))
+            print(stdout)
 
         choice = prompt_for_rotation()
 
