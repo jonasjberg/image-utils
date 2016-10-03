@@ -139,6 +139,8 @@ for video in mp4_files:
             logging.error('[ERROR] {p} returned exit code {c} and the following'
                           ' standard output:'.format(p=VIDEO_PLAYER, c=retval))
             logging.error(line for line in stdout)
+        else:
+            play_video = False
 
         choice = prompt_for_rotation()
 
@@ -146,13 +148,11 @@ for video in mp4_files:
             exit_program()
         elif choice == 'replay':
             logging.debug('Replaying video ..')
-            continue
+            play_video = True
         elif choice == 'skip':
             logging.debug('Skipping "{}" ..'.format(video))
-            play_video = False
             continue
         else:
-            play_video = False
             prepend_to_filename(choice, video)
 
 exit_program()
