@@ -53,9 +53,14 @@ else:
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
+def exit_program():
+    logging.debug('Exiting')
+    exit(0)
+
+
 if len(sys.argv) == 1:
     parser.print_help()
-    sys.exit(1)
+    exit_program()
 
 mp4_files = [name for name in args.filenames if
              os.path.isfile(name) and name.endswith('.mp4')
@@ -126,7 +131,8 @@ for video in mp4_files:
         choice = prompt_for_rotation()
 
         if choice == 'quit':
-            exit(0)
+            exit_program()
+
         if choice == 'replay':
             logging.debug('Replaying video ..')
             continue
@@ -137,3 +143,5 @@ for video in mp4_files:
 
         play_video = False
         prepend_to_filename(choice, video)
+
+exit_program()
