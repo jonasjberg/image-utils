@@ -139,9 +139,8 @@ for video in mp4_files:
             logging.error('[ERROR] {p} returned exit code {c} and the following'
                           ' standard output:'.format(p=VIDEO_PLAYER, c=retval))
             logging.error(line for line in stdout)
-        else:
-            play_video = False
 
+        play_video = False
         choice = prompt_for_rotation()
 
         if choice == 'quit':
