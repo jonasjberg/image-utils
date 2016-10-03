@@ -50,7 +50,6 @@ LOG_FORMAT = '%(asctime)s  %(levelname)-8.8s  %(message)-120.120s'
 if args.verbose:
     logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 else:
-    LOGFORMAT_DEFAULT = '%(asctime)s  %(message)-120.120s'
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
