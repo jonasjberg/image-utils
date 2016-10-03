@@ -18,6 +18,7 @@ import sys
 import os
 import argparse
 import subprocess
+import shutil
 import logging
 
 # Video player executable to use for previewing the videos.
@@ -61,6 +62,13 @@ def exit_program():
 if len(sys.argv) == 1:
     parser.print_help()
     exit_program()
+
+if not shutil.which(cmd=VIDEO_PLAYER):
+    print('This program needs "{player}" to run. Please install "{player}" or '
+          'specify an alternate video player in the script source variable '
+          '"VIDEO_PLAYER".'.format(player=VIDEO_PLAYER))
+    exit_program()
+
 
 mp4_files = [name for name in args.filenames if
              os.path.isfile(name) and name.endswith('.mp4')
