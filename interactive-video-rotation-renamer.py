@@ -46,7 +46,7 @@ parser.add_argument('-v', '--verbose',
                     help='Enable verbose (debug) output.')
 args = parser.parse_args()
 
-LOG_FORMAT = '%(asctime)s  %(levelname)-8.8s  %(message)-120.120s'
+LOG_FORMAT = '%(asctime)s  %(levelname)-8.8s  %(message)-s'
 if args.verbose:
     logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
 else:
