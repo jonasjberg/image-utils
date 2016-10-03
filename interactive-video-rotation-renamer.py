@@ -139,16 +139,15 @@ for video in mp4_files:
 
         if choice == 'quit':
             exit_program()
-
-        if choice == 'replay':
+        elif choice == 'replay':
             logging.debug('Replaying video ..')
             continue
-        if choice == 'skip':
+        elif choice == 'skip':
             logging.debug('Skipping "{}" ..'.format(video))
             play_video = False
             continue
-
-        play_video = False
-        prepend_to_filename(choice, video)
+        else:
+            play_video = False
+            prepend_to_filename(choice, video)
 
 exit_program()
