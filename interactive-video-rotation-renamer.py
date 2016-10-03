@@ -58,25 +58,6 @@ def exit_program():
     exit(0)
 
 
-if len(sys.argv) == 1:
-    parser.print_help()
-    exit_program()
-
-if not shutil.which(cmd=VIDEO_PLAYER):
-    print('This program needs "{player}" to run. Please install "{player}" or '
-          'specify an alternate video player in the script source variable '
-          '"VIDEO_PLAYER".'.format(player=VIDEO_PLAYER))
-    exit_program()
-
-
-mp4_files = [name for name in args.filenames if
-             os.path.isfile(name) and name.endswith('.mp4')
-             and not name.startswith('todo_')]
-logging.debug('Got {} files. File listing:'.format(len(mp4_files)))
-for number, file in enumerate(mp4_files):
-    logging.debug('[{}] "{}"'.format(number, file))
-
-
 def prompt_for_rotation():
     prompt_options = {
         '1': {'description': 'Do not rotate (reencode only)',
@@ -118,6 +99,30 @@ def prepend_to_filename(prepend_str, filename):
 
     logging.info('Renaming "{}" to "{}" ..'.format(filename, new_name))
     os.rename(filename, new_name)
+
+
+if len(sys.argv) == 1:
+    parser.print_help()
+    exit_program()
+
+if not shutil.which(cmd=VIDEO_PLAYER):
+    print('This program needs "{player}" to run. Please install "{player}" or '
+          'specify an alternate video player in the script source variable '
+          '"VIDEO_PLAYER".'.format(player=VIDEO_PLAYER))
+    exit_program()
+
+
+mp4_files = [name for name in args.filenames if
+             os.path.isfile(name) and name.endswith('.mp4')
+             and not name.startswith('todo_')]
+
+if len(mp4_files) == 0:
+    logging.debug('Got no files matching "!(todo_)*.mp4" ..')
+    exit_program()
+
+logging.debug('Got {} files. File listing:'.format(len(mp4_files)))
+for number, file in enumerate(mp4_files):
+    logging.debug('[{}] "{}"'.format(number, file))
 
 
 for video in mp4_files:
