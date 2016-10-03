@@ -19,12 +19,16 @@ import os
 import argparse
 import subprocess
 
+# Video player executable to use for previewing the videos.
+VIDEO_PLAYER = 'mplayer'
+VIDEO_PLAYER_ARGS = ['-really-quiet']
+
 parser = argparse.ArgumentParser(
     prog='interactive-video-rotation-renamer.py',
-    description='Helper for renaming videos prior to rotating user other tools.'
-                'The videos are played with mplayer, the user is then prompted '
-                'for the desired rotation, whereby the file is renamed to '
-                'reflect the selection.',
+    description='Helper for renaming videos prior to rotating using other '
+                'tools. The videos are opened with {player}, the user is then '
+                'prompted for the desired rotation, whereby the file is '
+                'renamed to reflect the selection.'.format(player=VIDEO_PLAYER),
     epilog='Written by Jonas Sjöberg in 2016.'
 )
 
@@ -91,15 +95,17 @@ def prepend_to_filename(prepend_str, filename):
 for video in mp4_files:
     play_video = True
     while play_video:
-        print('\n\nPlaying video with mplayer: "{}"'.format(video))
+        logging.debug('Using {p} to preview video: "{v}"'.format(p=VIDEO_PLAYER,
+                                                                 v=video))
         try:
-            cmd = ['mplayer', '-really-quiet', video]
+            cmd = [VIDEO_PLAYER] + VIDEO_PLAYER_ARGS + [video]
             cmd_output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             stdout = e.output
             retval = e.returncode
-            print('[ERROR] mplayer returned exit code {} and;'.format(retval))
-            print(stdout)
+            logging.error('[ERROR] {p} returned exit code {c} and the following'
+                          ' standard output:'.format(p=VIDEO_PLAYER, c=retval))
+            logging.error(line for line in stdout)
 
         choice = prompt_for_rotation()
 
