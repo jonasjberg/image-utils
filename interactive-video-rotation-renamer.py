@@ -18,6 +18,7 @@ import sys
 import os
 import argparse
 import subprocess
+import logging
 
 # Video player executable to use for previewing the videos.
 VIDEO_PLAYER = 'mplayer'
@@ -38,7 +39,19 @@ parser.add_argument(dest='filenames',
                     help='Videos to preview and rename. Files must match *.mp4.'
                          ' Everything else is ignored. See the source code for'
                          'more information ..')
+parser.add_argument('-v', '--verbose',
+                    dest='verbose',
+                    action='store_true',
+                    help='Enable verbose (debug) output.')
 args = parser.parse_args()
+
+LOG_FORMAT = '%(asctime)s  %(levelname)-8.8s  %(message)-120.120s'
+if args.verbose:
+    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT)
+else:
+    LOGFORMAT_DEFAULT = '%(asctime)s  %(message)-120.120s'
+    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
+
 
 if len(sys.argv) == 1:
     parser.print_help()
@@ -47,6 +60,9 @@ if len(sys.argv) == 1:
 mp4_files = [name for name in args.filenames if
              os.path.isfile(name) and name.endswith('.mp4')
              and not name.startswith('todo_')]
+logging.debug('Got {} files. File listing:'.format(len(mp4_files)))
+for number, file in enumerate(mp4_files):
+    logging.debug('[{}] "{}"'.format(number, file))
 
 
 def prompt_for_rotation():
@@ -79,16 +95,16 @@ def prompt_for_rotation():
         if choice in prompt_options:
             return prompt_options[choice]['action']
         else:
-            print('Invalid selection.')
+            logging.warning('Invalid selection.')
 
 
 def prepend_to_filename(prepend_str, filename):
     new_name = prepend_str + filename
     if os.path.exists(new_name):
-        print('File exists: "{}" .. Skipping.'.format(new_name))
+        logging.warning('File exists: "{}" .. Skipping.'.format(new_name))
         return
 
-    print('Renaming "{}" to "{}" ..'.format(filename, new_name))
+    logging.info('Renaming "{}" to "{}" ..'.format(filename, new_name))
     os.rename(filename, new_name)
 
 
@@ -112,9 +128,10 @@ for video in mp4_files:
         if choice == 'quit':
             exit(0)
         if choice == 'replay':
+            logging.debug('Replaying video ..')
             continue
         if choice == 'skip':
-            print('Skipping "{}" ..'.format(video))
+            logging.debug('Skipping "{}" ..'.format(video))
             play_video = False
             continue
 
