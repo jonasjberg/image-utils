@@ -2,7 +2,7 @@ image-utils
 ================================================================================
 
     Created : 2016-04-03
-    Updated : 2016-10-02
+    Updated : 2016-10-04
     Author  : Jonas Sjöberg
     E-mail  : jomeganas@gmail.com
     GitHub  : https://github.com/jonasjberg 
@@ -69,3 +69,11 @@ To display usage information, run:
 ```bash
 ~/Bin/auto-adjust-photos -h
 ```
+
+
+--------------------------------------------------------------------------------
+
+`interactive-video-rotation-renamer.py`
+---------------------------------------
+Preview videos and interactively rename them to indicate what should be done by
+other tools.
