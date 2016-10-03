@@ -74,7 +74,7 @@ def prompt_for_rotation():
         for number, option in sorted(prompt_options.items()):
             print('[{}]  {}'.format(number, option['description']))
 
-        choice = raw_input('\nPlease input selection: ')
+        choice = input('\nPlease input selection: ')
 
         if choice in prompt_options:
             return prompt_options[choice]['action']
