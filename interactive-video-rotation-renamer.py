@@ -53,9 +53,9 @@ else:
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
 
 
-def exit_program():
+def exit_program(retval):
     logging.debug('Exiting')
-    exit(0)
+    exit(retval)
 
 
 def prompt_for_rotation():
@@ -103,13 +103,13 @@ def prepend_to_filename(prepend_str, filename):
 
 if len(sys.argv) == 1:
     parser.print_help()
-    exit_program()
+    exit_program(1)
 
 if not shutil.which(cmd=VIDEO_PLAYER):
     print('This program needs "{player}" to run. Please install "{player}" or '
           'specify an alternate video player in the script source variable '
           '"VIDEO_PLAYER".'.format(player=VIDEO_PLAYER))
-    exit_program()
+    exit_program(1)
 
 
 mp4_files = [name for name in args.filenames if
@@ -118,7 +118,7 @@ mp4_files = [name for name in args.filenames if
 
 if len(mp4_files) == 0:
     logging.debug('Got no files matching "!(todo_)*.mp4" ..')
-    exit_program()
+    exit_program(0)
 
 logging.debug('Got {} files. File listing:'.format(len(mp4_files)))
 for number, file in enumerate(mp4_files):
@@ -144,7 +144,7 @@ for video in mp4_files:
         choice = prompt_for_rotation()
 
         if choice == 'quit':
-            exit_program()
+            exit_program(0)
         elif choice == 'replay':
             logging.debug('Replaying video ..')
             play_video = True
@@ -154,4 +154,4 @@ for video in mp4_files:
         else:
             prepend_to_filename(choice, video)
 
-exit_program()
+exit_program(0)
