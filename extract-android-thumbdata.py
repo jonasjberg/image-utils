@@ -5,7 +5,7 @@
 #
 """extract files from Android thumbdata3 file"""
 
-f=open('thumbdata3.dat','rb')
+f = open('thumbdata3.dat', 'rb')
 tdata = f.read()
 f.close()
 
@@ -15,14 +15,14 @@ JPEG_FILE_END = '\xff\xd9'
 count = 0
 start = 0
 while True:
-    x1 = tdata.find(JPEG_FILE_START,start)
+    x1 = tdata.find(JPEG_FILE_START, start)
     if x1 < 0:
         break
-    x2 = tdata.find(JPEG_FILE_END,x1)
-    jpg = tdata[x1:x2+1]
+    x2 = tdata.find(JPEG_FILE_END, x1)
+    jpg = tdata[x1:x2 + 1]
     count += 1
     fname = 'extracted%d03.jpg' % (count)
-    fw = open(fname,'wb')
+    fw = open(fname, 'wb')
     fw.write(jpg)
     fw.close()
-    start = x2+2
+    start = x2 + 2
