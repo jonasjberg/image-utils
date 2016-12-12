@@ -9,16 +9,16 @@ f=open('thumbdata3.dat','rb')
 tdata = f.read()
 f.close()
 
-ss = '\xff\xd8'
-se = '\xff\xd9'
+JPEG_FILE_START = '\xff\xd8'
+JPEG_FILE_END = '\xff\xd9'
 
 count = 0
 start = 0
 while True:
-    x1 = tdata.find(ss,start)
+    x1 = tdata.find(JPEG_FILE_START,start)
     if x1 < 0:
         break
-    x2 = tdata.find(se,x1)
+    x2 = tdata.find(JPEG_FILE_END,x1)
     jpg = tdata[x1:x2+1]
     count += 1
     fname = 'extracted%d03.jpg' % (count)
