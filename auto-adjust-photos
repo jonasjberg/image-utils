@@ -45,7 +45,7 @@ MAX_IMAGE_FILE_SIZE=2500000
 #        msg_type "just text, no type specified"
 function msg_type()
 {
-    if [ $# -gt 1 ]
+    if [ "$#" -gt "1" ]
     then
         local type="$1"
         shift
@@ -54,23 +54,23 @@ function msg_type()
     local text="${@}"
     local label=''
 
-    if [ "$type" == "debug" ] && [ $verbose -lt "2" ]
+    if [ "$type" == "debug" ] && [ "$verbose" -lt "2" ]
     then
         return
     fi
 
-    case $type in
-        error ) label='ERROR'
-                color=$C_RED    ;;
-        info  ) label='status'
-                color=$C_GREEN  ;;
-        warn  ) label='warning'
-                color=$C_YELLOW ;;
-        debug ) label='debug'
-                color=$C_NORMAL ;;
+    case "$type" in
+        error ) label="ERROR"
+                color="$C_RED"    ;;
+        info  ) label="status"
+                color="$C_GREEN"  ;;
+        warn  ) label="warning"
+                color="$C_YELLOW" ;;
+        debug ) label="debug"
+                color="$C_NORMAL" ;;
         ok    ) label='OK!'
-                color=$C_GREEN  ;;
-        *     ) color=$C_NORMAL ;;
+                color="$C_GREEN"  ;;
+        *     ) color="$C_NORMAL" ;;
     esac
 
     # Surround label with brackets if not empty.
@@ -87,9 +87,9 @@ function msg_type()
 function exit_with_status_code()
 {
     TIMESTAMP="$(date +%F\ %H:%M:%S)"
-    status=${1:-1}
+    status="${1:-1}"
     msg_type debug "${TIMESTAMP} ${SCRIPT_NAME} exiting with status [${status}]"
-    exit ${status}
+    exit "$status"
 }
 
 # Displays the usage information.
@@ -129,7 +129,7 @@ function check_dependencies_are_available()
 #                   2 - skip, image skipped
 function main()
 {
-    local arg=${1:-}
+    local arg="${1:-}"
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     msg_type info "Got file \"${arg}\""
@@ -141,11 +141,11 @@ function main()
     # results. If the model cannot be determined, proceed with checking the ratio
     # of size to disk space usage.
     unset model_result
-    model_result=$(exiftool -if '$model' -quiet -s3 -model "$arg" 2>/dev/null)
-    model_check_exit_code=$?
+    model_result="$(exiftool -if '$model' -quiet -s3 -model "$arg" 2>/dev/null)"
+    model_check_exit_code="$?"
 
     # TODO: Really bail if check fails?
-    if [ $model_check_exit_code -ne 0 ]
+    if [ "$model_check_exit_code" -ne "0" ]
     then
         msg_type error "Camera/device model check failed"
         return 1
@@ -156,11 +156,11 @@ function main()
         msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
         return 2
     else
-        case $model_result in
+        case "$model_result" in
             "iPhone 4")   model=iphone4  ;;
             "GT-I9100")   model=galaxys4 ;;
             "ONE E1003")  model=oneplusx ;;
-            *)            model=unknown    ;;
+            *)            model=unknown  ;;
         esac
     fi
 
@@ -191,20 +191,20 @@ function main()
 # Downsamples images whose file size exceed the threshold "MAX_IMAGE_FILE_SIZE".
 function handle_image_if_size_above_threshold()
 {
-    local arg=${1:-}
+    local arg="${1:-}"
     [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     msg_type debug "Checking size of file: \"${arg}\""
     image_size=$(stat -c%s "$arg")
 
     # Compare image size to max size threshold and proceed if size exceeds threshold.
-    if [ $image_size -gt $MAX_IMAGE_FILE_SIZE ]
+    if [ "$image_size" -gt "$MAX_IMAGE_FILE_SIZE" ]
     then
         msg_type debug "Size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
         downsample_image_with_mogrify "$arg"
         #downsample_image_with_aaphoto "$arg"
 
-        if [ $? -eq 0 ]
+        if [ "$?" -eq "0" ]
         then
             image_size_new=$(stat -c%s "${arg}")
             percentage=$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)
@@ -228,7 +228,7 @@ function downsample_image_with_mogrify()
 
     MOGRIFY_OPTS='-scale 75% -quality 85'
     msg_type info "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
-    [ $dryrun -eq 1 ] && return
+    [ "$dryrun" -eq "1" ] && return
     mogrify ${MOGRIFY_OPTS} "$1"
 }
 
@@ -269,7 +269,7 @@ TIMESTAMP="$(date +%F\ %H:%M:%S)"
 msg_type debug "${TIMESTAMP} starting ${SCRIPT_NAME}"
 
 
-if [ $# -eq 0 ]
+if [ "$#" -eq "0" ]
 then
     # No arguments provided.
     msg_type warn "No arguments provided."
@@ -325,9 +325,9 @@ else
         fi
 
         main "$arg"
-        status=$?
+        status="$?"
 
-        if [ $status -eq 2 ]
+        if [ $status -eq "2" ]
         then
             msg_type warn "Skipped \"${arg}\" .."
         elif [ $status -eq "1" ]
@@ -339,12 +339,12 @@ else
         fi
 
         # Extra newline for readability ONLY if brief mode is disabled.
-        [ "$brief" -eq 0 ] && printf "\n"
+        [ "$brief" -eq "0" ] && printf "\n"
     done
 
     # Print results with a summary of all tests, *IF* option brief is not set.
     # Keep text width below 60 columns to avoid messy output in small terminal windows.
-    if [ $brief -ne 1 ]
+    if [ $brief -ne "1" ]
     then
         TAB='    '
         SEP=':'
