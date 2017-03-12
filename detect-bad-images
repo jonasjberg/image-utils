@@ -108,7 +108,7 @@ function print_help()
 # Main routine that actually does the analysis.
 function main()
 {
-    arg=${1:-}
+    arg="${1:-}"
 
     [ -z "$arg" ] && { msg_type warn "Got null argument .."            ; return 2 ; }
     [ -e "$arg" ] || { msg_type warn "File \"${arg}\" does not exist." ; return 2 ; }
