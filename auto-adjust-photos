@@ -129,10 +129,9 @@ function check_dependencies_are_available()
 #                   2 - skip, image skipped
 function main()
 {
-    local arg="${1:-}"
-    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
-    msg_type info "Got file \"${arg}\""
+    msg_type info "Got file \"${1}\""
 
     # What is to be done to the image is determined by the device/camera model.
     # Example: Photos taken with the OnePlus X camera app are very big and blurry
@@ -141,7 +140,7 @@ function main()
     # results. If the model cannot be determined, proceed with checking the ratio
     # of size to disk space usage.
     unset model_result
-    model_result="$(exiftool -if '$model' -quiet -s3 -model "$arg" 2>/dev/null)"
+    model_result="$(exiftool -if '$model' -quiet -s3 -model "$1" 2>/dev/null)"
     model_check_exit_code="$?"
 
     # TODO: Really bail if check fails?
@@ -168,7 +167,7 @@ function main()
 
     if [ "$model" == "oneplusx" ]
     then
-        handle_image_if_size_above_threshold "$arg"
+        handle_image_if_size_above_threshold "$1"
         return $?
     elif [ "$model" == "galaxys4" ]
     then
@@ -191,28 +190,27 @@ function main()
 # Downsamples images whose file size exceed the threshold "MAX_IMAGE_FILE_SIZE".
 function handle_image_if_size_above_threshold()
 {
-    local arg="${1:-}"
-    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
-    msg_type debug "Checking size of file: \"${arg}\""
-    image_size=$(stat -c%s "$arg")
+    msg_type debug "Checking size of file: \"${1}\""
+    image_size=$(stat -c%s "$1")
 
     # Compare image size to max size threshold and proceed if size exceeds threshold.
     if [ "$image_size" -gt "$MAX_IMAGE_FILE_SIZE" ]
     then
         msg_type debug "Size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
-        downsample_image_with_mogrify "$arg"
-        #downsample_image_with_aaphoto "$arg"
+        downsample_image_with_mogrify "$1"
+        #downsample_image_with_aaphoto "$1"
 
         if [ "$?" -eq "0" ]
         then
-            image_size_new=$(stat -c%s "${arg}")
+            image_size_new=$(stat -c%s "${1}")
             percentage=$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)
             msg_type stats $(printf "Size (bytes)  was: %12.12s\n" "$image_size")
             msg_type stats $(printf "              now: %12.12s     (%-6.6s%% change)\n" "$image_size_new" "$percentage")
             return 0
         else
-            msg_type error "Failed processing \"${arg}\""
+            msg_type error "Failed processing \"${1}\""
             return 1
         fi
     else
@@ -223,8 +221,7 @@ function handle_image_if_size_above_threshold()
 
 function downsample_image_with_mogrify()
 {
-    local arg=${1:-}
-    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     MOGRIFY_OPTS='-scale 75% -quality 85'
     msg_type info "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
@@ -234,8 +231,7 @@ function downsample_image_with_mogrify()
 
 function downsample_image_with_aaphoto()
 {
-    local arg=${1:-}
-    [ -z "$arg" ] && { msg_type error "Got null argument .." ; return 2 ; }
+    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     AAPHOTO_OPTS='--autoadjust --resize75% --quality85 --overwrite'
     msg_type info "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
