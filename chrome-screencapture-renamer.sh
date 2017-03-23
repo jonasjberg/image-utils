@@ -2,8 +2,9 @@
 
 # chrome-screencapture-renamer.sh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Written in 2016 by Jonas Sjöberg
-# https://jonasjberg.github.io/
+# Written in 2016-2017 by Jonas Sjöberg
+# http://www.jonasjberg.com
+# https://github.com/jonasjberg
 #
 # Renames images created by the "Full Page Screen Capture" Chrome plugin.
 # ______________________________________________________________________________
