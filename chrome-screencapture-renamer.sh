@@ -22,8 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ______________________________________________________________________________
 
-
 # set -x
+
 TS_FORMAT='+%FT%H%M%S'
 MATCH_PREFIX='screencapture-'
 MATCH_EXTENS='png'
