@@ -32,6 +32,20 @@ FILETAG_SEP=' -- '
 DRYRUN='false'
 
 
+# The "date" command included with GNU coreutils differs from that shipped with
+# MacOS.  Require the GNU version.  (install coreutils through homebrew on mac)
+case "$OSTYPE" in
+    darwin*) datecmd="$(which gdate)" ;;
+    *)       datecmd="$(which date)"  ;;
+esac
+
+if ! "$($datecmd --version)" 2>&1 | head -n 1 | grep -q 'GNU coreutils'
+then
+    echo "This program requires GNU coreutils date to run." 2>&1
+    exit 1
+fi
+
+
 if [ ! -d "$1" ]
 then
     echo "Usage: $(basename $0) PATH"
@@ -55,7 +69,7 @@ fi
         [ -z "$ts_digits" ] && continue
 
         # Get the first 10 of the 13 digits.
-        timestamp="$(date --date "@${ts_digits:0:10}" $TS_FORMAT)"
+        timestamp="$($datecmd --date "@${ts_digits:0:10}" $TS_FORMAT)"
 
         # Insane sanity check ..
         if ! grep -qoP '^20[01]\d-[01]\d-[0-3]\dT[0-2]\d[0-5]\d[0-5]\d$' <<< "$timestamp"
