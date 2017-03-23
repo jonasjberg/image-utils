@@ -1,17 +1,18 @@
-image-utils
+`image-utils`
 ================================================================================
 
-    Created : 2016-04-03
-    Updated : 2016-11-22
-    Author  : Jonas Sjöberg
-    GitHub  : https://github.com/jonasjberg
-    Website : https://jonasjberg.github.io
+*Copyright(c) 2016-2017 Jonas Sjöberg*  
+<http://www.jonasjberg.com>  
+<https://github.com/jonasjberg>  
 
 Utilities related to editing and organizing photos/images.
-Currently a work in progress, you are on your own.
 
+Currently a work in progress with little to no documentation.  Do not expect
+any help with support and/or troubleshooting any of these programs.  These are
+personal, ad-hoc projects but GitHub offers free hosting, so ..
 
 --------------------------------------------------------------------------------
+
 
 `detect-bad-images`
 -------------------
