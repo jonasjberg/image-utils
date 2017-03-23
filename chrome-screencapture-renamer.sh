@@ -77,8 +77,6 @@ fi
             echo "  WARNING  -- Failed sanity check. Skipping .."
             echo "   [FILE] : ${f}"
             echo "   Digits : ${ts_digits}"
-            echo "Timestamp : ${timestamp}"
-            echo  "[RESULT] : ${new_filename}"
             echo ""
             echo ""
             continue
