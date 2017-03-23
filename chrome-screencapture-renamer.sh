@@ -72,7 +72,7 @@ fi
         timestamp="$($datecmd --date "@${ts_digits:0:10}" $TS_FORMAT)"
 
         # Insane sanity check ..
-        if ! grep -qoP '^20[01]\d-[01]\d-[0-3]\dT[0-2]\d[0-5]\d[0-5]\d$' <<< "$timestamp"
+        if ! grep -qoE '^20[01]\d-[01]\d-[0-3]\dT[0-2]\d[0-5]\d[0-5]\d$' <<< "$timestamp"
         then
             echo "  WARNING  -- Failed sanity check. Skipping .."
             echo "   [FILE] : ${f}"
