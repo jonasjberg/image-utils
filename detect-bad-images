@@ -165,7 +165,7 @@ function main()
 
 function check_image_with_exiftool()
 {
-    exiftool -warning -quiet -ignoreMinorErrors "$1" | sed -r 's/[\ ]{2,}/\ /g'
+    exiftool -warning -quiet -ignoreMinorErrors "$1" | tr -s ' '
 }
 
 function check_image_with_jpeginfo()
