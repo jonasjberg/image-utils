@@ -124,3 +124,16 @@ Renames images created by the "Full Page Screen Capture" Chrome plugin.
     2016-11-22T171909 jekyll-tips-jekyll-casts-control-flow-statements-in-liquid -- screenshot.png
     ```
 
+
+--------------------------------------------------------------------------------
+
+`extract_base64_media.py`
+-------------------------
+Extracts base64-encoded media (currently only MIME-type 'image/jpeg') from
+HTML-files.
+
+For up-to-date usage information, run:
+```bash
+extract_base64_media.py --help
+```
+
