@@ -44,8 +44,9 @@ type from the "magic" header bytes, so file extension should not matter.
     "weird" file names properly, like those containing spaces, etc.
 
     ```bash
-    ~/Bin/detect-bad-images.sh -b ~/Pictures/* | while read f
+    ~/Bin/detect-bad-images.sh -b ~/Pictures/* | while IFS='\n' read -r f
     do
+        [ -f "$f" ] || continue
         printf "do whatever with %s ..\n" "$f"
     done
     ```
