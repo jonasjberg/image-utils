@@ -137,3 +137,18 @@ For up-to-date usage information, run:
 extract_base64_media.py --help
 ```
 
+
+--------------------------------------------------------------------------------
+
+`microsoft_vision.py`
+---------------------
+Queries the Microsoft Vision API with images for information about visual
+content found in the image. Requires a Microsoft Visual API key, which are
+available for free (with some restrictions) at:
+<https://www.microsoft.com/cognitive-services/en-us/sign-up>
+
+For up-to-date usage information, run:
+```bash
+microsoft_vision.py --help
+```
+
