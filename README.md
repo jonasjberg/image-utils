@@ -27,8 +27,8 @@ personal, ad-hoc projects and GitHub offers free hosting, so here they are..
 --------------------------------------------------------------------------------
 
 
-`detect-bad-images`
--------------------
+`detect-bad-images.sh`
+----------------------
 Finds corrupt images by using external tools `exiftool` and `jpeginfo`.
 
 Detects corrupt images from reading contents and metadata.
@@ -44,7 +44,7 @@ type from the "magic" header bytes, so file extension should not matter.
     "weird" file names properly, like those containing spaces, etc.
 
     ```bash
-    ~/Bin/detect-bad-images -b ~/Pictures/* | while read f
+    ~/Bin/detect-bad-images.sh -b ~/Pictures/* | while read f
     do
         printf "do whatever with %s ..\n" "$f"
     done
@@ -55,21 +55,21 @@ type from the "magic" header bytes, so file extension should not matter.
     Deletes images deemed "bad". There is no undoing deletion so be careful!
 
     ```bash
-    find ~/Pictures -type f -exec ~/Bin/detect-bad-images -d '{}' \;
+    find ~/Pictures -type f -exec ~/Bin/detect-bad-images.sh -d '{}' \;
     ```
 
 ### Complete usage information
 To display usage information, run:
 ```bash
-~/Bin/detect-bad-images -h
+~/Bin/detect-bad-images.sh -h
 ```
 Probably won't be complete though.
 
 
 --------------------------------------------------------------------------------
 
-`auto-adjust-photos`
---------------------
+`auto-adjust-photos.sh`
+-----------------------
 Auto-adjusts images based on metadata, file size and image dimensions.
 
 Originally written for automatically modifying images uploaded to the 'Camera
@@ -80,7 +80,7 @@ camera/device might need to be resized or have the white balance auto-adjusted
 ### Complete usage information
 To display usage information, run:
 ```bash
-~/Bin/auto-adjust-photos -h
+~/Bin/auto-adjust-photos.sh -h
 ```
 Probably not complete.
 
