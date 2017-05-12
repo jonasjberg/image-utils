@@ -127,7 +127,10 @@ def query_api(image_file, api_key):
         return json_data
 
     except Exception as e:
-        log.error("[ERROR] Caught exception when querying the API: ", str(e))
+        log.error('[ERROR] Caught exception when querying the API;')
+        if e:
+            log.error(str(e))
+        return False
 
 
 def get_caption_text(json_data):
