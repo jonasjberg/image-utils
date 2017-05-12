@@ -171,19 +171,22 @@ def main(paths, api_key, dump_response=False, print_caption=True):
 
             response = query_api(image, api_key)
 
-            if response:
-                log.info('Received query response')
+            if not response:
+                log.error('Unable to query to API')
+                sys.exit(1)
 
-                _image_basename = os.path.basename(image)
-                if dump_response:
-                    print('Response JSON data for image '
-                          '"{}":'.format(str(_image_basename)))
-                    print(json.dumps(response, indent=8))
-                if print_caption:
-                    caption = get_caption_text(response)
-                    if caption:
-                        print('"{}": {}'.format(str(_image_basename),
-                                                str(caption)))
+            log.info('Received query response')
+
+            _image_basename = os.path.basename(image)
+            if dump_response:
+                print('Response JSON data for image '
+                      '"{}":'.format(str(_image_basename)))
+                print(json.dumps(response, indent=8))
+            if print_caption:
+                caption = get_caption_text(response)
+                if caption:
+                    print('"{}": {}'.format(str(_image_basename),
+                                            str(caption)))
 
     except KeyboardInterrupt:
         sys.exit('Received Keyboard Interrupt; Exiting ..')
