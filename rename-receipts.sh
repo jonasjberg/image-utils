@@ -105,6 +105,8 @@ main()
 
     new_name="${arg_date} ${arg_store} - ${arg_price}.${arg_extension}"
     echo "Result for file: \"${arg_basename}\": \"${new_name}\""
+
+    mv -nv -- "$1" "$new_name"
 }
 
 # Greps "$ocrtextfile" with the provided pattern.
