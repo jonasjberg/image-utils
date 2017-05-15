@@ -115,14 +115,16 @@ try_datetime_regex()
 {
     [ -n "$arg_date" ] && return
 
-    local _tmp_datetime="$(grep -oE "$1" "$ocrtextfile" | head -n 1)"
+    local _tmp_datetime="$(grep -oE -m 1 "$1" "$ocrtextfile")"
+    echo "_tmp_datetime: \"${_tmp_datetime}\""
+
     if [ -n "$_tmp_datetime" ]
     then
         echo "Found datetime with regex: \"${1}\""
 
         # Remove all chars except digits, dashes, spaces and colons.
-        _tmp_datetime="${_date_full//[^0-9]/}"
-        # echo "Halfway Cleaned up date: \"${_tmp_date_full}\""
+        _tmp_datetime="${_tmp_datetime//[^0-9]/}"
+        echo "Halfway Cleaned up datetime: \"${_tmp_datetime}\""
 
         if [ -n "$_tmp_datetime" ]
         then
