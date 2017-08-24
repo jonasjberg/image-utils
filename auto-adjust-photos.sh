@@ -21,6 +21,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # ______________________________________________________________________________
 
+set -o noclobber -o nounset -o pipefail
 #set -x
 
 SCRIPT_NAME="$(basename $0)"
