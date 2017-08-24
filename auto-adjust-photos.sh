@@ -22,17 +22,17 @@
 # ______________________________________________________________________________
 
 set -o noclobber -o nounset -o pipefail
-#set -x
+# set -x
 
-SCRIPT_NAME="$(basename $0)"
+SCRIPT_NAME="$(basename "$0")"
 
-C_NORMAL=$(tput sgr0)
-C_RED=$(tput setaf 1)
-C_GREEN=$(tput setaf 2)
-C_YELLOW=$(tput setaf 3)
-C_BLUE=$(tput setaf 4)
-C_MAGENTA=$(tput setaf 5)
-C_CYAN=$(tput setaf 6)
+C_NORMAL="$(tput sgr0)"
+C_RED="$(tput setaf 1)"
+C_GREEN="$(tput setaf 2)"
+C_YELLOW="$(tput setaf 3)"
+C_BLUE="$(tput setaf 4)"
+C_MAGENTA="$(tput setaf 5)"
+C_CYAN="$(tput setaf 6)"
 HALFTAB='  '
 FULLTAB='    '
 
@@ -109,18 +109,13 @@ function print_help()
 }
 
 
-function check_dependencies_are_available()
+function assert_command_available()
 {
-    required_programs="aaphoto convert mogrify exiftool"
-
-    for program in $required_programs
-    do
-        if ! command -v "$program" >/dev/null 2>&1
-        then
-            msg_type error "Missing required executable \"${program}\" .. Aborting."
-            exit 127
-        fi
-    done
+    if ! command -v "$1" >/dev/null 2>&1
+    then
+        msg_type error "Missing required executable \"${1}\" .. Aborting."
+        exit 127
+    fi
 }
 
 
@@ -130,7 +125,8 @@ function check_dependencies_are_available()
 #                   2 - skip, image skipped
 function main()
 {
-    msg_type info "Got file \"${1}\""
+    local _image="$1"
+    msg_type info "Got image file \"${_image}\""
 
     # What is to be done to the image is determined by the device/camera model.
     # Example: Photos taken with the OnePlus X camera app are very big and blurry
@@ -139,7 +135,7 @@ function main()
     # results. If the model cannot be determined, proceed with checking the ratio
     # of size to disk space usage.
     unset model_result
-    model_result="$(exiftool -if '$model' -quiet -s3 -model "$1" 2>/dev/null)"
+    model_result="$(exiftool -if '$model' -quiet -s3 -model "${_image}" 2>/dev/null)"
     model_check_exit_code="$?"
 
     # TODO: Really bail if check fails?
@@ -155,74 +151,103 @@ function main()
         return 2
     else
         case "$model_result" in
-            "iPhone 4")   model=iphone4  ;;
-            "GT-I9100")   model=galaxys4 ;;
-            "ONE E1003")  model=oneplusx ;;
-            *)            model=unknown  ;;
+            "iPhone 4")   model=iphone4       ;;
+            "GT-I9100")   model=galaxys4      ;;
+            "ONE E1003")  model=oneplusx      ;;
+            "DMC-FZ200")  model=compactsystem ;;
+            *)            model=unknown       ;;
         esac
     fi
 
-    msg_type debug "Camera/device model: ${model} (${model_result})"
+    msg_type debug "Camera/device model: \"${model}\" (\"${model_result}\")"
 
-    if [ "$model" == "oneplusx" ]
+    local _retcode
+    if [ "$model" == 'oneplusx' ]
     then
-        handle_image_if_size_above_threshold "$1"
-        return $?
-    elif [ "$model" == "galaxys4" ]
+        downsample_image_if_size_above_threshold "${_image}" '2500000' '75%' '85'
+        _retcode="$?"
+    elif [ "$model" == 'compactsystem' ]
+    then
+        if downsample_image_if_size_above_threshold "${_image}" '3500000' '50%' '90'
+        then
+            auto_orient_from_exif "${_image}"
+            _retcode="$?"
+        else
+            _retcode=1
+        fi
+    elif [ "$model" == 'galaxys4' ]
     then
         # TODO: Implement device specific behaviours
-        msg_type warn "Behaviour for device not implemented yet. Skipping .."
-        return 2
-    elif [ "$model" == "iphone4" ]
+        msg_type warn 'Behaviour for device not implemented. Skipping ..'
+        _retcode=2
+    elif [ "$model" == 'iphone4' ]
     then
         # TODO: Implement device specific behaviours
-        msg_type warn "Behaviour for device not implemented yet. Skipping .."
-        return 2
-    elif [ "$model" == "unknown" ]
+        msg_type warn 'Behaviour for device not implemented. Skipping ..'
+        _retcode=2
+    elif [ "$model" == 'unknown' ]
     then
         # TODO: Implement device specific behaviours
-        msg_type warn "Behaviour for unspecified/NULL model not implemented yet. Skipping .."
-        return 2
+        msg_type warn "Behaviour for model \"${model}\" (\"${model_result}\") not implemented. Skipping .."
+        _retcode=2
     fi
+
+    return "${_retcode}"
 }
 
-# Downsamples images whose file size exceed the threshold "MAX_IMAGE_FILE_SIZE".
-function handle_image_if_size_above_threshold()
+
+# Arguments:
+#
+#   $1: Path to the image file test.
+#   $2: Threshold file size in bytes.
+#   $3: Resize scale for images whose size exceeds "threshold".
+#   $4: Conversion quality for images whose size exceeds "threshold".
+#
+# Downsamples images whose file size exceed "threshold".
+function downsample_image_if_size_above_threshold()
 {
-    msg_type debug "Checking size of file: \"${1}\""
-    image_size=$(stat -c%s "$1")
+    local _image="$1"
+    local _threshold="$2"
+    local _scale="$3"
+    local _quality="$4"
+
+    msg_type debug "Checking size of file: \"${_image}\""
+    image_size="$(stat -c%s "${_image}")"
 
     # Compare image size to max size threshold and proceed if size exceeds threshold.
-    if [ "$image_size" -gt "$MAX_IMAGE_FILE_SIZE" ]
+    if [ "$image_size" -gt "${_threshold}" ]
     then
-        msg_type debug "Size exceeds threshold (${image_size} > ${MAX_IMAGE_FILE_SIZE})"
-        downsample_image_with_mogrify "$1"
-        #downsample_image_with_aaphoto "$1"
+        msg_type debug "Size exceeds threshold (${image_size} > ${_threshold})"
+        downsample_image_with_mogrify "${_image}" "${_scale}" "${_quality}"
+        # Alternatively: downsample_image_with_aaphoto "$1"
 
         if [ "$?" -eq "0" ]
         then
-            image_size_new=$(stat -c%s "${1}")
-            percentage=$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)
-            msg_type stats $(printf "Size (bytes)  was: %12.12s\n" "$image_size")
-            msg_type stats $(printf "              now: %12.12s     (%-6.6s%% change)\n" "$image_size_new" "$percentage")
+            image_size_new="$(stat -c%s "${_image}")"
+            percentage="$(echo "scale=2; ($image_size_new - $image_size)/$image_size * 100" | bc)"
+            msg_type stats "$(printf "Size (bytes)  was: %12.12s\n" "$image_size")"
+            msg_type stats "$(printf "              now: %12.12s     (%-6.6s%% change)\n" "$image_size_new" "$percentage")"
             return 0
         else
-            msg_type error "Failed processing \"${1}\""
+            msg_type error "Failed processing \"${_image}\""
             return 1
         fi
     else
-        msg_type debug "Size does not exceed threshold (${image_size} < ${MAX_IMAGE_FILE_SIZE})"
+        msg_type debug "Size does not exceed threshold (${image_size} < ${_threshold})"
         return 0
     fi
 }
 
 function downsample_image_with_mogrify()
 {
+    local _image="$1"
+    local _scale="$2"
+    local _quality="$3"
 
-    MOGRIFY_OPTS='-scale 75% -quality 85'
+    MOGRIFY_OPTS="-scale ${_scale} -quality ${_quality}"
     msg_type info "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
     [ "$dryrun" -eq "1" ] && return
-    mogrify ${MOGRIFY_OPTS} "$1"
+    mogrify ${MOGRIFY_OPTS} "${_image}"
 }
 
 function downsample_image_with_aaphoto()
@@ -231,6 +256,32 @@ function downsample_image_with_aaphoto()
     msg_type info "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
     [ $dryrun -eq 1 ] && return
     aaphoto ${AAPHOTO_OPTS} "$1"
+}
+
+function auto_orient_from_exif()
+{
+    local _image="$1"
+    local _orientation
+
+    _orientation="$(jhead -v "${_image}" \
+                    | sed -nr "s:.*Orientation = ([0-9]+).*:\1:p" \
+                    | head -n 1)"
+
+    if [ -z "${_orientation}" ]
+    then
+        _orientation=0
+    fi
+
+    if [ "${_orientation}" -gt "1" ]
+    then
+        msg_type info "Auto-orienting \"${_image}\" .."
+        # mogrify -auto-orient "${_image}"
+        # return "$?"
+        # TODO: Make sure this does the "right thing" ..
+        msg_type info "WOULD HAVE executed: \"mogrify -auto-orient \"${_image}\"\""
+    fi
+
+    return 0
 }
 
 function print_line()
@@ -257,6 +308,12 @@ dryrun=0
 # Log program invocation.
 TIMESTAMP="$(date +%F\ %H:%M:%S)"
 msg_type debug "${TIMESTAMP} starting ${SCRIPT_NAME}"
+
+assert_command_available exiftool
+assert_command_available mogrify
+assert_command_available convert
+assert_command_available aaphoto
+assert_command_available jhead
 
 
 if [ "$#" -eq "0" ]
