@@ -114,7 +114,7 @@ function assert_command_available()
     if ! command -v "$1" >/dev/null 2>&1
     then
         msg_type error "Missing required executable \"${1}\" .. Aborting."
-        exit 127
+        exit_with_status_code 127
     fi
 }
 
