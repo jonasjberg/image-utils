@@ -44,7 +44,7 @@ MAX_IMAGE_FILE_SIZE=2500000
 # Usage: msg_type info example informative text
 #        msg_type warn some unexpected thing happened
 #        msg_type "just text, no type specified"
-function msg_type()
+msg_type()
 {
     if [ "$#" -gt "1" ]
     then
@@ -85,7 +85,7 @@ function msg_type()
 
 # Terminates the program. Prints debug information if enabled.
 # Takes the exit code as argument. Defaults to 1 if unspecified.
-function exit_with_status_code()
+exit_with_status_code()
 {
     TIMESTAMP="$(date +%F\ %H:%M:%S)"
     status="${1:-1}"
@@ -94,7 +94,7 @@ function exit_with_status_code()
 }
 
 # Displays the usage information.
-function print_help()
+print_help()
 {
     msg_type info "\"${SCRIPT_NAME}\" -- Jonas Sjoberg 2016"
     msg_type info "Auto-adjusts images based on metadata, file size and image dimensions."
@@ -109,7 +109,7 @@ function print_help()
 }
 
 
-function assert_command_available()
+assert_command_available()
 {
     if ! command -v "$1" >/dev/null 2>&1
     then
@@ -123,7 +123,7 @@ function assert_command_available()
 # Return values:    0 - success, image processed ok
 #                   1 - failure, image processing failed
 #                   2 - skip, image skipped
-function main()
+main()
 {
     local _image="$1"
     msg_type info "Got image file \"${_image}\""
@@ -204,7 +204,7 @@ function main()
 #   $4: Conversion quality for images whose size exceeds "threshold".
 #
 # Downsamples images whose file size exceed "threshold".
-function downsample_image_if_size_above_threshold()
+downsample_image_if_size_above_threshold()
 {
     local _image="$1"
     local _threshold="$2"
@@ -238,7 +238,7 @@ function downsample_image_if_size_above_threshold()
     fi
 }
 
-function downsample_image_with_mogrify()
+downsample_image_with_mogrify()
 {
     local _image="$1"
     local _scale="$2"
@@ -250,7 +250,7 @@ function downsample_image_with_mogrify()
     mogrify ${MOGRIFY_OPTS} "${_image}"
 }
 
-function downsample_image_with_aaphoto()
+downsample_image_with_aaphoto()
 {
     AAPHOTO_OPTS='--autoadjust --resize75% --quality85 --overwrite'
     msg_type info "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
@@ -258,7 +258,7 @@ function downsample_image_with_aaphoto()
     aaphoto ${AAPHOTO_OPTS} "$1"
 }
 
-function auto_orient_from_exif()
+auto_orient_from_exif()
 {
     local _image="$1"
     local _orientation
@@ -284,13 +284,13 @@ function auto_orient_from_exif()
     return 0
 }
 
-function print_line()
+print_line()
 {
     MAX_WIDTH=60
     printf "%-${MAX_WIDTH}.${MAX_WIDTH}s\n" "$*"
 }
 
-function add_to_total_preprocessed_disk_usage()
+add_to_total_preprocessed_disk_usage()
 {
     #amount=
     total_preprocessed_disk_usage=$(( $total_preprocessed_disk_usage + amount ))
