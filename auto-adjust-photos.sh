@@ -129,8 +129,6 @@ function check_dependencies_are_available()
 #                   2 - skip, image skipped
 function main()
 {
-    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
-
     msg_type info "Got file \"${1}\""
 
     # What is to be done to the image is determined by the device/camera model.
@@ -190,8 +188,6 @@ function main()
 # Downsamples images whose file size exceed the threshold "MAX_IMAGE_FILE_SIZE".
 function handle_image_if_size_above_threshold()
 {
-    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
-
     msg_type debug "Checking size of file: \"${1}\""
     image_size=$(stat -c%s "$1")
 
@@ -221,7 +217,6 @@ function handle_image_if_size_above_threshold()
 
 function downsample_image_with_mogrify()
 {
-    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
 
     MOGRIFY_OPTS='-scale 75% -quality 85'
     msg_type info "Downsampling image with mogrify using options \"${MOGRIFY_OPTS}\""
@@ -231,8 +226,6 @@ function downsample_image_with_mogrify()
 
 function downsample_image_with_aaphoto()
 {
-    [ -z "${1:-}" ] && { msg_type error "Got null argument .." ; return 2 ; }
-
     AAPHOTO_OPTS='--autoadjust --resize75% --quality85 --overwrite'
     msg_type info "Downsampling image with aaphoto using options \"${AAPHOTO_OPTS}\""
     [ $dryrun -eq 1 ] && return
