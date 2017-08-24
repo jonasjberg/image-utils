@@ -70,11 +70,6 @@ main()
     #   Attempt/method #1:
     try_match_store 'Apoteket Hjartat'    'Apotek Hjärtat'
     try_match_store 'Apoteket Hjartat'    'apotekhjartat'
-    try_match_store 'Kronans Droghandel'  'Kronans Apotek'
-    try_match_store 'Kronans Droghandel'  'Kronans Droghandel'
-    try_match_store 'Kronans Droghandel'  'Kr.*ns Droghandel'
-    try_match_store 'Kronans Droghandel'  'kronansapotek'
-    try_match_store 'Kronans Droghandel'  'www\.kr.*ek\.se'
     try_match_store 'Coop Konsum Krysset' 'COOP KONSUM KRYSSET'
     try_match_store 'Coop Konsum Krysset' 'KRYSSET'
     try_match_store 'Coop Konsum Krysset' '0107475230'
@@ -83,11 +78,20 @@ main()
     try_match_store 'Coop Konsum'         '785000.1517'
     try_match_store 'Coop Konsum'         'COOP'
     try_match_store 'Coop Konsum'         'coop'
-    try_match_store 'Tempo Tvargatan'     'Tempo Tvärgatan'
+    try_match_store 'ICA Kvantum'         'ICA KVANTUM'
+    try_match_store 'ICA Kvantum'         'Atlasgatan 42'
+    try_match_store 'ICA Kvantum'         '026-669990'
+    try_match_store 'ICA Kvantum'         '556487-2868'
+    try_match_store 'Kronans Droghandel'  'Kronans Apotek'
+    try_match_store 'Kronans Droghandel'  'Kronans Droghandel'
+    try_match_store 'Kronans Droghandel'  'Kr.*ns Droghandel'
+    try_match_store 'Kronans Droghandel'  'kronansapotek'
+    try_match_store 'Kronans Droghandel'  'www\.kr.*ek\.se'
     try_match_store 'Soders Zoo'          '558212.*9030$'
     try_match_store 'Soders Zoo'          '026.81.?18.?73'
     try_match_store 'Soders Zoo'          '556212.9030'
     try_match_store 'Soders Zoo'          '15585846.361317'
+    try_match_store 'Tempo Tvargatan'     'Tempo Tvärgatan'
 
     
     #   Get the total cost/price.
