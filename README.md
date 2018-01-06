@@ -26,6 +26,37 @@ personal, ad-hoc projects and GitHub offers free hosting, so here they are..
 
 --------------------------------------------------------------------------------
 
+`convert-keep-metadata.py`
+--------------------------
+Converts images from one format to another while keeping any metadata.
+
+```
+Usage:  convert-keep-metadata.sh [TARGET_EXTENSION] [FILES..]
+
+Converts images from one format to another while keeping any metadata.
+Given [FILES] are converted the format specified by [TARGET_EXTENSION]
+
+After converting the image, metadata from the original is applied to
+the target image. The destination image metadata may contain
+duplicates, but metadata is not likely lost in the conversion.
+Tranferring the original metadata in an exact form is probably a
+non-trivial task..
+
+    [TARGET_EXTENSION]
+        See "convert -list format" for valid extensions.
+
+    [FILES..]
+        Path(s) to the images to convert.
+
+
+convert-keep-metadata.sh is free. You can redistribute it and/or
+modify it under the terms of the Do What The Fuck You Want To Public
+License, Version 2. See http://www.wtfpl.net/ for more details.
+convert-keep-metadata.sh is distributed WITHOUT ANY WARRANTY.
+```
+
+
+--------------------------------------------------------------------------------
 
 `detect-bad-images.sh`
 ----------------------
