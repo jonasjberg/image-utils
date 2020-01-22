@@ -1,7 +1,7 @@
 `image-utils`
 ================================================================================
 
-*Copyright(c) 2016-2018 Jonas Sjöberg*  
+*Copyright(c) 2016-2020 Jonas Sjöberg*  
 <http://www.jonasjberg.com>  
 <https://github.com/jonasjberg>  
 
