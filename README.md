@@ -172,6 +172,15 @@ extract_base64_media.py --help
 
 --------------------------------------------------------------------------------
 
+`extract_exif_thumbnails.sh`
+-------------------------
+Extracts EXIF thumbnails from one or more files with MIME-type `image/jpeg`.
+Extracted thumbnails are written to filenames on the form
+`${ORIGINAL_FILENAME_WITHOUT_EXTENSION}_exif_thumbnail.jpg`.
+
+
+--------------------------------------------------------------------------------
+
 `microsoft_vision.py`
 ---------------------
 Queries the Microsoft Vision API with images for information about visual
