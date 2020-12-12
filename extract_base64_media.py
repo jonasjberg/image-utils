@@ -23,22 +23,22 @@
 # _____________________________________________________________________
 
 
-# TODO: Handle other media types -- currently only MIME-type 'image/jpeg'.
-
-
-import re
-import os
 import base64
 import logging
+import os
+import re
 
 PROGRAM_NAME = os.path.basename(__file__)
 
-#RE_ENCODED_JPEG = re.compile(
-#    r'^\s*?<img class="post-image" src="data:image/jpeg;charset=utf-8;base64,(.*)%0A">\s*',
-#    re.DOTALL | re.MULTILINE)
+
 RE_ENCODED_JPEG = re.compile(
     r'^.*?src="data:image/jpeg;charset=utf-8;base64,(.*)%0A">\s*',
-    re.DOTALL | re.MULTILINE)
+    re.DOTALL | re.MULTILINE,
+)
+RE_ENCODED_PNG = re.compile(
+    r'data:image/png(?:;charset=utf-8)?;base64,(.*)',
+    re.DOTALL | re.MULTILINE,
+)
 
 
 def validate_file(arg):
@@ -51,23 +51,24 @@ def validate_file(arg):
 
 
 def decode_and_write_to_disk(found_data, dry_run=False):
-    def _format_filename(number):
-        return 'extracted_{0:04d}.jpg'.format(number)
+    def _format_filename(_number, _extension):
+        return 'extracted_{:04d}.{!s}'.format(_number, _extension)
 
     i = 0
     write_count = 0
     error_count = 0
-    for raw_data in found_data:
+    for image in found_data:
+        raw_data = image['data']
         raw_data = raw_data.strip()
         if not raw_data:
             log.warning('Skipping (empty raw_data) ..')
             continue
 
-        outfile = _format_filename(i)
+        outfile = _format_filename(i, image['filetype'])
         while os.path.exists(outfile):
             log.debug('Destination exists: "{}"'.format(outfile))
             i += 1
-            outfile = _format_filename(i)
+            outfile = _format_filename(i, image['filetype'])
 
         # TODO: Handle data encoding properly.
         raw_data = raw_data.replace('%0A', '')
@@ -106,17 +107,29 @@ def decode_and_write_to_disk(found_data, dry_run=False):
 
 
 def extract_encoded_images_from_html(filename):
-    with open(filename) as file_data:
-        _found_data = []
-        for num, line in enumerate(file_data, 1):
-            match = RE_ENCODED_JPEG.match(line)
-            if match:
-                log.debug('Found base64 encoded jpeg image on line: '
-                          '{}'.format(num))
-                _found_data.append(match.group(1))
+    results = []
 
-        log.debug('Found {} images ..'.format(len(_found_data)))
-        return _found_data
+    with open(filename) as file_data:
+        for num, line in enumerate(file_data, 1):
+            match_jpg = RE_ENCODED_JPEG.match(line)
+            if match_jpg:
+                log.debug('Found base64 encoded jpeg image on line %d', num)
+                results.append({
+                    'filetype': 'jpg',
+                    'data': match_jpg.group(1),
+                })
+
+            log.debug('Trying to matching line: %s', line)
+            match_png = RE_ENCODED_PNG.match(line)
+            if match_png:
+                log.debug('Found base64 encoded PNG image on line %d', num)
+                results.append({
+                    'filetype': 'png',
+                    'data': match_png.group(1),
+                })
+
+    log.debug('Extracted %d images ..', len(results))
+    return results
 
 
 if __name__ == '__main__':
@@ -151,13 +164,13 @@ if __name__ == '__main__':
 
     log = logging.getLogger()
 
-    _encoded_data = []
+    encoded_data = []
     for f in args.files:
         log.info('Processing file: "{}" ..'.format(str(f)))
-        _encoded_data += extract_encoded_images_from_html(f)
+        encoded_data += extract_encoded_images_from_html(f)
 
-    if _encoded_data:
-        log.info('[FINISHED] Found {} encoded files'.format(len(_encoded_data)))
-        decode_and_write_to_disk(_encoded_data, args.dry_run)
+    if encoded_data:
+        log.info('[FINISHED] Found {} encoded files'.format(len(encoded_data)))
+        decode_and_write_to_disk(encoded_data, args.dry_run)
     else:
         log.info('[FINISHED] No data was found')
